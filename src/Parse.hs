@@ -1,3 +1,8 @@
+module Parse
+( parse,
+  unwrap
+) where
+
 import Debug.Trace
 import Data.Char
 import Test.HUnit
