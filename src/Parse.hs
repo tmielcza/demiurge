@@ -25,6 +25,10 @@ instance Show Expr where
     show (Grp o e1 e2) = "(" ++ (show o) ++ (show e1) ++ (show e2) ++ ")"
     show (Fact c) = [c]
 
+instance Show a => Show (Result a) where
+    show (Success e) = "Success : " ++ (show e)
+    show (Error err) = "Error : " ++ err
+
 unwrap (Success a) = a
 unwrap (Error str) = error str
 
