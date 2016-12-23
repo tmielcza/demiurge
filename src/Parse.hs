@@ -42,6 +42,17 @@ charToToken c
     | isAlpha c = Success (Letter c)
     | otherwise = Error $ "Lexing error near: " ++ show c
 
+strToTokens :: [Tokens] -> String -> Result [Tokens]
+strToTokens result (c:rest)
+  | c == '|' = concat (Operator Or)
+  | c == '+' = concat (Operator And)
+  | c == '^' = concat (Operator Xor)
+  | isAlpha c = concat (Letter c)
+  | otherwise = Error $ "Lexing error near: " ++ show c
+  where concat x = strToTokens (x:result) rest
+
+strToTokens result [] = Success (reverse result)
+
 headAst:: Maybe Expr -> [Tokens] -> Result Expr
 
 -- if the begining expression just a fact
@@ -100,7 +111,8 @@ mapResult func (head:tail) =
 mapResult func [] = Success []
 
 parse str =
-    case mapResult charToToken (filter (/= ' ') str) of
+--    case mapResult charToToken (filter (/= ' ') str) of
+    case strToTokens [] $ filter (/= ' ') str of
       Success tokens -> headAst Nothing tokens
       Error err -> Error err
 
