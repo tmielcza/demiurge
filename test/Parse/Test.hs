@@ -24,5 +24,6 @@ parseSuite = testGroup "Parsing tests"
                parseErrorTest "A|B+C^",
                parseErrorTest "&",
                parseErrorTest "1",
-               parseErrorTest ""
+               parseErrorTest "",
+               parseErrorTest "A|A||"
              ]

@@ -90,7 +90,7 @@ ast expr_up op_up tokens@((Operator op_cur):(Letter c):remain) =
                 Success (_, token:_) -> Error $ "Unknown error with token : " ++ show token
                 error -> error
 
-ast _ _ [token] = Error $ "Unexpected token: " ++ show token
+ast _ _ (token:_) = Error $ "Unexpected token: " ++ show token
 
 parse str =
   case sequence $ map charToToken (filter (/= ' ') str) of
