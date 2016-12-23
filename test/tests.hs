@@ -1,6 +1,7 @@
 module Main where
 
-import Parse.Test
-import Test.HUnit.Text
+import Test.Framework (defaultMain)
 
-main = runTestTT parseSuite
+import Parse.Test
+
+main = defaultMain [parseSuite]
