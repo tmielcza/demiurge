@@ -45,7 +45,7 @@ charToToken c
 headAst:: Maybe Expr -> [Tokens] -> Result Expr
 
 -- if the begining expression just a fact
-headAst Nothing (Letter c:[]) = Success (Fact c)
+headAst Nothing [Letter c] = Success (Fact c)
 
 -- At the begining there is just a token list
 headAst Nothing (Letter c : Operator op : Letter b : tail)=
@@ -88,7 +88,7 @@ ast expr_up op_up tokens@((Operator op_cur):(Letter c):remain) =
                 Success (_, token:_) -> Error $ "Unknown error with token : " ++ show token
                 error -> error
 
-ast _ _ (token:[]) = Error $ "Unexpected token: " ++ show token
+ast _ _ [token] = Error $ "Unexpected token: " ++ show token
 
 mapResult func (head:tail) =
   case func head of
@@ -100,7 +100,7 @@ mapResult func (head:tail) =
 mapResult func [] = Success []
 
 parse str =
-    case mapResult charToToken (filter (\x -> x /= ' ') str) of
+    case mapResult charToToken (filter (/= ' ') str) of
       Success tokens -> headAst Nothing tokens
       Error err -> Error err
 
