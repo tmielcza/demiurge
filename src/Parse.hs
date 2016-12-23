@@ -1,7 +1,5 @@
 module Parse
-( parse,
-  unwrap,
-  checkResult
+( parse
 ) where
 
 import Debug.Trace
@@ -15,8 +13,6 @@ data Ope = Xor | Or | And
 data Expr = Grp Ope Expr Expr | Fact Char
     deriving(Eq)
 
-data Result a = Success a | Error String
-
 instance Show Ope where
     show Or = "|"
     show And = "+"
@@ -26,16 +22,6 @@ instance Show Expr where
     show (Grp o e1 e2) = "(" ++ (show e1) ++ (show o) ++ (show e2) ++ ")"
     show (Fact c) = [c]
 
-instance Show a => Show (Result a) where
-    show (Success e) = "Success : " ++ (show e)
-    show (Error err) = "Error : " ++ err
-
-unwrap (Success a) = a
-unwrap (Error str) = error str
-
-checkResult (Success _) = True
-checkResult (Error _) = False
-
 charToToken :: Char -> Either String Tokens
 charToToken c
     | c == '|' = Right (Operator Or)
@@ -44,55 +30,55 @@ charToToken c
     | isAlpha c = Right (Letter c)
     | otherwise = Left $ "Lexing error near: " ++ show c
 
-headAst:: Maybe Expr -> [Tokens] -> Result Expr
+headAst:: Maybe Expr -> [Tokens] -> Either String Expr
 
 -- if the begining expression just a fact
-headAst Nothing [Letter c] = Success (Fact c)
+headAst Nothing [Letter c] = Right (Fact c)
 
 -- At the begining there is just a token list
 headAst Nothing (Letter c : Operator op : Letter b : tail)=
     case ast (Fact b) op tail of
-      Success (expr_down, tail_down) -> headAst (Just (Grp op (Fact c) expr_down)) tail_down
-      Error err -> Error err
+      Right (expr_down, tail_down) -> headAst (Just (Grp op (Fact c) expr_down)) tail_down
+      Left err -> Left err
 
 -- Concatenate the right expression with the head
 headAst (Just expr) (Operator op : Letter b : tail) =
     case ast (Fact b) op tail of
-      Success (expr_down, tail_down) -> headAst (Just (Grp op expr expr_down)) tail_down
-      Error err -> Error err
+      Right (expr_down, tail_down) -> headAst (Just (Grp op expr expr_down)) tail_down
+      Left err -> Left err
 
 -- The end
-headAst (Just expr) [] = Success expr
+headAst (Just expr) [] = Right expr
 
 -- Empty expression
-headAst _ [] = Error "Empty expression"
+headAst _ [] = Left "Empty expression"
 
 -- Unexpected token
-headAst _ (token:_) = Error ("Unexpected token : " ++ (show token))
+headAst _ (token:_) = Left ("Unexpected token : " ++ (show token))
 
-ast:: Expr -> Ope -> [Tokens] -> Result (Expr, [Tokens])
+ast:: Expr -> Ope -> [Tokens] -> Either String (Expr, [Tokens])
 
-ast expr_up op_up [] = Success (expr_up, [])
+ast expr_up op_up [] = Right (expr_up, [])
 
 ast expr_up op_up tokens@((Operator op_cur):(Letter c):remain) =
     let expr_cur = (Fact c)
     in
         if op_up >= op_cur
-        then Success (expr_up, tokens)
+        then Right (expr_up, tokens)
         else
             case ast expr_cur op_cur remain of
-                Success (expr_down, remain_down@((Operator op_down):tail)) ->
+                Right (expr_down, remain_down@((Operator op_down):tail)) ->
                     if op_down < op_cur
-                    then Success ((Grp op_cur expr_up expr_down), remain_down)
+                    then Right ((Grp op_cur expr_up expr_down), remain_down)
                     else ast (Grp op_cur expr_up expr_down) op_up remain
-                Success (expr_down, []) ->
-                    Success ((Grp op_cur expr_up expr_down), [])
-                Success (_, token:_) -> Error $ "Unknown error with token : " ++ show token
+                Right (expr_down, []) ->
+                    Right ((Grp op_cur expr_up expr_down), [])
+                Right (_, token:_) -> Left $ "Unknown error with token : " ++ show token
                 error -> error
 
-ast _ _ (token:_) = Error $ "Unexpected token: " ++ show token
+ast _ _ (token:_) = Left $ "Unexpected token: " ++ show token
 
 parse str =
   case mapM charToToken (filter (/= ' ') str) of
     Right tokens -> headAst Nothing tokens
-    Left err -> Error err
+    Left err -> Left err

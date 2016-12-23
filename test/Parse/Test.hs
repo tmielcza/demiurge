@@ -4,10 +4,11 @@ import Test.Framework (testGroup, Test)
 import Test.Framework.Providers.HUnit
 import Test.HUnit hiding (Test)
 import Parse
+import Data.Either.Unwrap
 
-parseTest str expect = ((testCase expect) . (assertEqual "" str) . show . unwrap . parse) expect
+parseTest str expect = ((testCase expect) . (assertEqual "" str) . show . fromRight . parse) expect
 
-parseErrorTest str = ((testCase str) . (assertBool str) . not . checkResult . parse) str
+parseErrorTest str = ((testCase str) . (assertBool str) . isLeft . parse) str
 
 parseSuite = testGroup "Parsing tests"
              [
