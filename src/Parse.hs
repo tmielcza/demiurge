@@ -32,41 +32,41 @@ instance Show a => Show (Result a) where
 unwrap (Success a) = a
 unwrap (Error str) = error str
 
-check_result (Success _) = True
-check_result (Error _) = False
+checkResult (Success _) = True
+checkResult (Error _) = False
 
-char_to_token c
+charToToken c
     | c == '|' = Success (Operator Or)
     | c == '+'  = Success (Operator And)
     | c == '^' = Success (Operator Xor)
     | isAlpha c = Success (Letter c)
     | otherwise = Error $ "Lexing error near: " ++ show c
 
-head_ast:: Maybe Expr -> [Tokens] -> Result Expr
+headAst:: Maybe Expr -> [Tokens] -> Result Expr
 
 -- if the begining expression just a fact
-head_ast Nothing (Letter c:[]) = Success (Fact c)
+headAst Nothing (Letter c:[]) = Success (Fact c)
 
 -- At the begining there is just a token list
-head_ast Nothing (Letter c : Operator op : Letter b : tail)=
+headAst Nothing (Letter c : Operator op : Letter b : tail)=
     case ast (Fact b) op tail of
-      Success (expr_down, tail_down) -> head_ast (Just (Grp op (Fact c) expr_down)) tail_down
+      Success (expr_down, tail_down) -> headAst (Just (Grp op (Fact c) expr_down)) tail_down
       Error err -> Error err
 
 -- Concatenate the right expression with the head
-head_ast (Just expr) (Operator op : Letter b : tail) =
+headAst (Just expr) (Operator op : Letter b : tail) =
     case ast (Fact b) op tail of
-      Success (expr_down, tail_down) -> head_ast (Just (Grp op expr expr_down)) tail_down
+      Success (expr_down, tail_down) -> headAst (Just (Grp op expr expr_down)) tail_down
       Error err -> Error err
 
 -- The end
-head_ast (Just expr) [] = Success expr
+headAst (Just expr) [] = Success expr
 
 -- Empty expression
-head_ast _ [] = Error "Empty expression"
+headAst _ [] = Error "Empty expression"
 
 -- Unexpected token
-head_ast _ (token:_) = Error ("Unexpected token : " ++ (show token))
+headAst _ (token:_) = Error ("Unexpected token : " ++ (show token))
 
 ast:: Expr -> Ope -> [Tokens] -> Result (Expr, [Tokens])
 
@@ -90,18 +90,18 @@ ast expr_up op_up tokens@((Operator op_cur):(Letter c):remain) =
 
 ast _ _ (token:[]) = Error $ "Unexpected token: " ++ show token
 
-map_result func (head:tail) =
+mapResult func (head:tail) =
   case func head of
-    Success elem -> case map_result func tail of
+    Success elem -> case mapResult func tail of
       Success child -> Success $ elem : child
       Error err -> Error err
     Error err -> Error err
 
-map_result func [] = Success []
+mapResult func [] = Success []
 
 parse str =
-    case map_result char_to_token (filter (\x -> x /= ' ') str) of
-      Success tokens -> head_ast Nothing tokens
+    case mapResult charToToken (filter (\x -> x /= ' ') str) of
+      Success tokens -> headAst Nothing tokens
       Error err -> Error err
 
 test1 = TestCase (assertEqual "UN TEST" "((A+B)+C)" (show (unwrap $ parse "A+B+C")))
@@ -111,15 +111,15 @@ test4 = TestCase (assertEqual "UN TEST" "((A^(B|C))^D)" (show (unwrap $ parse "A
 test5 = TestCase (assertEqual "UN TEST" "((A^(B|(C+D)))^E)" (show (unwrap $ parse "A^B|C+D^E")))
 test6 = TestCase (assertEqual "UN TEST" "A" (show (unwrap $ parse "     A        ")))
 
-test7 = TestCase (assertBool "UN TEST D'ERREUR" (not $ check_result $ parse "+"))
-test8 = TestCase (assertBool "UN TEST D'ERREUR" (not $ check_result $ parse "AB"))
-test9 = TestCase (assertBool "UN TEST D'ERREUR" (not $ check_result $ parse "A+|"))
-test10 = TestCase (assertBool "UN TEST D'ERREUR" (not $ check_result $ parse ""))
-test11 = TestCase (assertBool "UN TEST D'ERREUR" (not $ check_result $ parse "A|B+C^"))
+test7 = TestCase (assertBool "UN TEST D'ERREUR" (not $ checkResult $ parse "+"))
+test8 = TestCase (assertBool "UN TEST D'ERREUR" (not $ checkResult $ parse "AB"))
+test9 = TestCase (assertBool "UN TEST D'ERREUR" (not $ checkResult $ parse "A+|"))
+test10 = TestCase (assertBool "UN TEST D'ERREUR" (not $ checkResult $ parse ""))
+test11 = TestCase (assertBool "UN TEST D'ERREUR" (not $ checkResult $ parse "A|B+C^"))
 
-test12 = TestCase (assertBool "UN TEST D'ERREUR" (not $ check_result $ parse "&"))
-test13 = TestCase (assertBool "UN TEST D'ERREUR" (not $ check_result $ parse "1"))
-test14 = TestCase (assertBool "UN TEST D'ERREUR" (not $ check_result $ parse ""))
+test12 = TestCase (assertBool "UN TEST D'ERREUR" (not $ checkResult $ parse "&"))
+test13 = TestCase (assertBool "UN TEST D'ERREUR" (not $ checkResult $ parse "1"))
+test14 = TestCase (assertBool "UN TEST D'ERREUR" (not $ checkResult $ parse ""))
 
 tests = TestList [TestLabel "test1" test1,
                   TestLabel "test2" test2,
