@@ -5,6 +5,24 @@ import Test.Framework.Providers.HUnit
 import Test.HUnit hiding (Test)
 import Parse
 
+parseTest str expect = ((testCase expect) . (assertEqual "" str) . show . unwrap . parse) expect
+
+parseErrorTest str = ((testCase str) . (assertBool str) . not . checkResult . parse) str
+
 parseSuite = testGroup "Parsing tests"
-             [testCase "Un test" (assertEqual "UN TEST" "((A+B)+C)" (show (unwrap $ parse "A+B+CD")))
+             [
+               parseTest "((A+B)+C)" "A+B+C",
+               parseTest "(A^(B|(C+D)))" "A^B|C+D",
+               parseTest "(A^((B|C)|D))" "A^B|C|D",
+               parseTest "((A^(B|C))^D)" "A^B|C^D",
+               parseTest "((A^(B|(C+D)))^E)" "A^B|C+D^E",
+               parseTest "A" "     A        ",
+               parseErrorTest "+",
+               parseErrorTest "AB",
+               parseErrorTest "A+|",
+               parseErrorTest "",
+               parseErrorTest "A|B+C^",
+               parseErrorTest "&",
+               parseErrorTest "1",
+               parseErrorTest ""
              ]

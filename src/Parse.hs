@@ -1,6 +1,7 @@
 module Parse
 ( parse,
-  unwrap
+  unwrap,
+  checkResult
 ) where
 
 import Debug.Trace
@@ -115,36 +116,3 @@ parse str =
     case strToTokens [] $ filter (/= ' ') str of
       Success tokens -> headAst Nothing tokens
       Error err -> Error err
-
-test1 = TestCase (assertEqual "UN TEST" "((A+B)+C)" (show (unwrap $ parse "A+B+C")))
-test2 = TestCase (assertEqual "UN TEST" "(A^(B|(C+D)))" (show (unwrap $ parse "A^B|C+D")))
-test3 = TestCase (assertEqual "UN TEST" "(A^((B|C)|D))" (show (unwrap $ parse "A^B|C|D")))
-test4 = TestCase (assertEqual "UN TEST" "((A^(B|C))^D)" (show (unwrap $ parse "A^B|C^D")))
-test5 = TestCase (assertEqual "UN TEST" "((A^(B|(C+D)))^E)" (show (unwrap $ parse "A^B|C+D^E")))
-test6 = TestCase (assertEqual "UN TEST" "A" (show (unwrap $ parse "     A        ")))
-
-test7 = TestCase (assertBool "UN TEST D'ERREUR" (not $ checkResult $ parse "+"))
-test8 = TestCase (assertBool "UN TEST D'ERREUR" (not $ checkResult $ parse "AB"))
-test9 = TestCase (assertBool "UN TEST D'ERREUR" (not $ checkResult $ parse "A+|"))
-test10 = TestCase (assertBool "UN TEST D'ERREUR" (not $ checkResult $ parse ""))
-test11 = TestCase (assertBool "UN TEST D'ERREUR" (not $ checkResult $ parse "A|B+C^"))
-
-test12 = TestCase (assertBool "UN TEST D'ERREUR" (not $ checkResult $ parse "&"))
-test13 = TestCase (assertBool "UN TEST D'ERREUR" (not $ checkResult $ parse "1"))
-test14 = TestCase (assertBool "UN TEST D'ERREUR" (not $ checkResult $ parse ""))
-
-tests = TestList [TestLabel "test1" test1,
-                  TestLabel "test2" test2,
-                  TestLabel "test3" test3,
-                  TestLabel "test4" test4,
-                  TestLabel "test5" test5,
-                  TestLabel "test6" test6,
-                  TestLabel "test7" test7,
-                  TestLabel "test8" test8,
-                  TestLabel "test9" test9,
-                  TestLabel "test10" test10,
-                  TestLabel "test11" test11,
-                  TestLabel "test12" test12,
-                  TestLabel "test13" test13,
-                  TestLabel "test14" test14
-                 ]
