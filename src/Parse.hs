@@ -22,7 +22,7 @@ instance Show Ope where
     show Xor = "^"
 
 instance Show Expr where
-    show (Grp o e1 e2) = "(" ++ (show o) ++ (show e1) ++ (show e2) ++ ")"
+    show (Grp o e1 e2) = "(" ++ (show e1) ++ (show o) ++ (show e2) ++ ")"
     show (Fact c) = [c]
 
 instance Show a => Show (Result a) where
@@ -104,11 +104,11 @@ parse str =
       Success tokens -> head_ast Nothing tokens
       Error err -> Error err
 
-test1 = TestCase (assertEqual "UN TEST" "(+(+AB)C)" (show (unwrap $ parse "A+B+C")))
-test2 = TestCase (assertEqual "UN TEST" "(^A(|B(+CD)))" (show (unwrap $ parse "A^B|C+D")))
-test3 = TestCase (assertEqual "UN TEST" "(^A(|(|BC)D))" (show (unwrap $ parse "A^B|C|D")))
-test4 = TestCase (assertEqual "UN TEST" "(^(^A(|BC))D)" (show (unwrap $ parse "A^B|C^D")))
-test5 = TestCase (assertEqual "UN TEST" "(^(^A(|B(+CD)))E)" (show (unwrap $ parse "A^B|C+D^E")))
+test1 = TestCase (assertEqual "UN TEST" "((A+B)+C)" (show (unwrap $ parse "A+B+C")))
+test2 = TestCase (assertEqual "UN TEST" "(A^(B|(C+D)))" (show (unwrap $ parse "A^B|C+D")))
+test3 = TestCase (assertEqual "UN TEST" "(A^((B|C)|D))" (show (unwrap $ parse "A^B|C|D")))
+test4 = TestCase (assertEqual "UN TEST" "((A^(B|C))^D)" (show (unwrap $ parse "A^B|C^D")))
+test5 = TestCase (assertEqual "UN TEST" "((A^(B|(C+D)))^E)" (show (unwrap $ parse "A^B|C+D^E")))
 test6 = TestCase (assertEqual "UN TEST" "A" (show (unwrap $ parse "     A        ")))
 
 test7 = TestCase (assertBool "UN TEST D'ERREUR" (not $ check_result $ parse "+"))
