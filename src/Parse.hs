@@ -36,23 +36,13 @@ unwrap (Error str) = error str
 checkResult (Success _) = True
 checkResult (Error _) = False
 
+charToToken :: Char -> Either String Tokens
 charToToken c
-    | c == '|' = Success (Operator Or)
-    | c == '+'  = Success (Operator And)
-    | c == '^' = Success (Operator Xor)
-    | isAlpha c = Success (Letter c)
-    | otherwise = Error $ "Lexing error near: " ++ show c
-
-strToTokens :: [Tokens] -> String -> Result [Tokens]
-strToTokens result (c:rest)
-  | c == '|' = concat (Operator Or)
-  | c == '+' = concat (Operator And)
-  | c == '^' = concat (Operator Xor)
-  | isAlpha c = concat (Letter c)
-  | otherwise = Error $ "Lexing error near: " ++ show c
-  where concat x = strToTokens (x:result) rest
-
-strToTokens result [] = Success (reverse result)
+    | c == '|' = Right (Operator Or)
+    | c == '+'  = Right (Operator And)
+    | c == '^' = Right (Operator Xor)
+    | isAlpha c = Right (Letter c)
+    | otherwise = Left $ "Lexing error near: " ++ show c
 
 headAst:: Maybe Expr -> [Tokens] -> Result Expr
 
@@ -102,17 +92,7 @@ ast expr_up op_up tokens@((Operator op_cur):(Letter c):remain) =
 
 ast _ _ [token] = Error $ "Unexpected token: " ++ show token
 
-mapResult func (head:tail) =
-  case func head of
-    Success elem -> case mapResult func tail of
-      Success child -> Success $ elem : child
-      Error err -> Error err
-    Error err -> Error err
-
-mapResult func [] = Success []
-
 parse str =
---    case mapResult charToToken (filter (/= ' ') str) of
-    case strToTokens [] $ filter (/= ' ') str of
-      Success tokens -> headAst Nothing tokens
-      Error err -> Error err
+  case sequence $ map charToToken (filter (/= ' ') str) of
+    Right tokens -> headAst Nothing tokens
+    Left err -> Error err
