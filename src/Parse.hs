@@ -93,6 +93,6 @@ ast expr_up op_up tokens@((Operator op_cur):(Letter c):remain) =
 ast _ _ (token:_) = Error $ "Unexpected token: " ++ show token
 
 parse str =
-  case sequence $ map charToToken (filter (/= ' ') str) of
+  case mapM charToToken (filter (/= ' ') str) of
     Right tokens -> headAst Nothing tokens
     Left err -> Error err
