@@ -54,21 +54,17 @@ ast:: Expr -> Ope -> [Tokens] -> Either String (Expr, [Tokens])
 
 ast expr_up op_up [] = Right (expr_up, [])
 
-ast expr_up op_up tokens@((Operator op_cur):(Letter c):remain) =
-    let expr_cur = (Fact c)
-    in
-        if op_up >= op_cur
-        then Right (expr_up, tokens)
-        else
-            case ast expr_cur op_cur remain of
-                Right (expr_down, remain_down@((Operator op_down):tail)) ->
-                    if op_down < op_cur
-                    then Right ((Grp op_cur expr_up expr_down), remain_down)
-                    else ast (Grp op_cur expr_up expr_down) op_up remain
-                Right (expr_down, []) ->
-                    Right ((Grp op_cur expr_up expr_down), [])
-                Right (_, token:_) -> Left $ "Unknown error with token : " ++ show token
-                error -> error
+ast expr_up op_up tokens@((Operator op_cur):(Letter c):remain)
+  | op_up >= op_cur = Right (expr_up, tokens)
+  | otherwise       = case ast expr_cur op_cur remain of
+                        Right (expr_down, remain_down@((Operator op_down):tail)) ->
+                          if op_down < op_cur
+                          then Right ((Grp op_cur expr_up expr_down), remain_down)
+                          else ast (Grp op_cur expr_up expr_down) op_up remain
+                        Right (expr_down, []) -> Right ((Grp op_cur expr_up expr_down), [])
+                        Right (_, token:_) -> Left $ "Unknown error with token : " ++ show token
+                        error -> error
+  where expr_cur = (Fact c)
 
 ast _ _ (token:_) = Left $ "Unexpected token: " ++ show token
 
