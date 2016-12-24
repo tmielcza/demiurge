@@ -32,14 +32,8 @@ charToToken c
 
 headAst:: Maybe Expr -> [Tokens] -> Either String Expr
 
--- if the begining expression just a fact
-headAst Nothing [Letter c] = Right (Fact c)
-
--- At the begining there is just a token list
-headAst Nothing (Letter c : Operator op : Letter b : tail)=
-    case ast (Fact b) op tail of
-      Right (expr_down, tail_down) -> headAst (Just (Grp op (Fact c) expr_down)) tail_down
-      Left err -> Left err
+-- Extract first fact (if exists)
+headAst Nothing (Letter c:remain) = headAst (Just (Fact c)) remain
 
 -- Concatenate the right expression with the head
 headAst (Just expr) (Operator op : Letter b : tail) =
@@ -51,7 +45,7 @@ headAst (Just expr) (Operator op : Letter b : tail) =
 headAst (Just expr) [] = Right expr
 
 -- Empty expression
-headAst _ [] = Left "Empty expression"
+headAst Nothing [] = Left "Empty expression"
 
 -- Unexpected token
 headAst _ (token:_) = Left ("Unexpected token : " ++ (show token))
