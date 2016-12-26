@@ -37,6 +37,7 @@ headAst Nothing (Letter c:remain) = headAst (Just (Fact c)) remain
 
 -- Concatenate the right expression with the head
 headAst (Just expr) (Operator op : Letter b : tail) =
+--  (ast (Fact b) op tail) >>= (\(expr_down, tail_down) -> headAst (Just (Grp op expr expr_down)) tail_down)
     case ast (Fact b) op tail of
       Right (expr_down, tail_down) -> headAst (Just (Grp op expr expr_down)) tail_down
       Left err -> Left err
