@@ -67,11 +67,14 @@ ast_fact :: [Tokens] -> (Maybe Expr, [Tokens])
 ast_fact (Letter f:rest) = (Just (Fact f), rest)
 ast_fact rest = (Nothing, rest)
 
+ast tokens =
+  case ast_xor Nothing tokens of
+    (Just expr, []) -> Right expr
+    (_, faulty:_) -> Left ("Unexpected token : " ++ show faulty)
+    _ -> Left "Empty expression"
+
 parse :: String -> Either String Expr
 parse str =
   case mapM charToToken (filter (/= ' ') str) of
-    Right tokens -> case ast_xor Nothing tokens of
-      (Just expr, []) -> Right expr
-      (_, faulty:_) -> Left ("Unexpected token : " ++ show faulty)
-      _ -> Left "Empty expression"
+    Right tokens -> ast tokens
     Left err -> Left err
