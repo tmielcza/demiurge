@@ -6,11 +6,11 @@ import Debug.Trace
 import Data.Char
 import Test.HUnit
 
-data Tokens = Letter Char | Operator Ope
+data Tokens = Letter Char | Operator Ope | Bang
     deriving(Show)
 data Ope = Xor | Or | And 
     deriving(Eq, Ord)
-data Expr = Grp Ope Expr Expr | Fact Char
+data Expr = Grp Ope Expr Expr | Fact Char | Not Expr
     deriving(Eq)
 
 instance Show Ope where
@@ -21,12 +21,14 @@ instance Show Ope where
 instance Show Expr where
     show (Grp o e1 e2) = "(" ++ (show e1) ++ (show o) ++ (show e2) ++ ")"
     show (Fact c) = [c]
+    show (Not expr) = "!" ++ (show expr)
 
 charToToken :: Char -> Either String Tokens
 charToToken c
     | c == '|' = Right (Operator Or)
     | c == '+'  = Right (Operator And)
     | c == '^' = Right (Operator Xor)
+    | c == '!' = Right Bang
     | isAlpha c = Right (Letter c)
     | otherwise = Left $ "Lexing error near: " ++ show c
 
@@ -49,14 +51,21 @@ ast_or expr rest =
 
 ast_and :: Maybe Expr -> [Tokens] -> (Maybe Expr, [Tokens])
 ast_and expr rest =
-  case ast_fact Nothing rest of
+  case ast_not rest of
     (Just expr_d, (Operator And):rest_d) -> ast_and (add_expr And expr expr_d) rest_d
     (Just expr_d, rest_d) -> ((add_expr And expr expr_d), rest_d)
     other -> other
 
-ast_fact :: Maybe Expr -> [Tokens] -> (Maybe Expr, [Tokens])
-ast_fact expr (Letter f:rest) = (Just (Fact f), rest)
-ast_fact expr rest = (Nothing, rest)
+ast_not :: [Tokens] -> (Maybe Expr, [Tokens])
+ast_not (Bang:rest) =
+  case ast_not rest of
+    (Just expr_d, rest_d) -> (Just (Not expr_d), rest_d)
+    other -> other
+ast_not rest = ast_fact rest
+
+ast_fact :: [Tokens] -> (Maybe Expr, [Tokens])
+ast_fact (Letter f:rest) = (Just (Fact f), rest)
+ast_fact rest = (Nothing, rest)
 
 parse :: String -> Either String Expr
 parse str =
