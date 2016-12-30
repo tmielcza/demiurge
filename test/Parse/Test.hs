@@ -17,6 +17,9 @@ parseSuite = testGroup "Parsing tests"
                parseTest "(A^((B|C)|D))" "A^B|C|D",
                parseTest "((A^(B|C))^D)" "A^B|C^D",
                parseTest "((A^(B|(C+D)))^E)" "A^B|C+D^E",
+               parseTest "!A" "!A",
+               parseTest "(!A+!B)" "!A+!B",
+               parseTest "(!!!!!!A^!!!!!B)" "!!!!!!A^!!!!!B",
                parseTest "A" "     A        ",
                parseErrorTest "+",
                parseErrorTest "AB",
@@ -26,5 +29,7 @@ parseSuite = testGroup "Parsing tests"
                parseErrorTest "&",
                parseErrorTest "1",
                parseErrorTest "",
-               parseErrorTest "A|A||"
+               parseErrorTest "A|A||",
+               parseErrorTest "!",
+               parseErrorTest "!!!!"
              ]
