@@ -81,4 +81,4 @@ tokenize :: String -> Either String [Token]
 tokenize = mapM charToToken . filter (/= ' ')
 
 parse :: String -> Either String Expr
-parse = (>>= ast) . tokenize
+parse str = tokenize str >>= ast
