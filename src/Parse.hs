@@ -77,6 +77,7 @@ ast tokens =
     (_, faulty:_) -> Left ("Unexpected token : " ++ show faulty)
     _ -> Left "Empty expression"
 
+tokenize :: String -> Either String [Token]
 tokenize str =
   mapM charToToken (filter (/= ' ') str)
 
