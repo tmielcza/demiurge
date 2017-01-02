@@ -77,8 +77,9 @@ ast tokens =
     (_, faulty:_) -> Left ("Unexpected token : " ++ show faulty)
     _ -> Left "Empty expression"
 
+tokenize str =
+  mapM charToToken (filter (/= ' ') str)
+
 parse :: String -> Either String Expr
 parse str =
-  case mapM charToToken (filter (/= ' ') str) of
-    Right tokens -> ast tokens
-    Left err -> Left err
+   ((>>= ast) . tokenize) str
