@@ -78,9 +78,7 @@ ast tokens =
     _ -> Left "Empty expression"
 
 tokenize :: String -> Either String [Token]
-tokenize str =
-  mapM charToToken (filter (/= ' ') str)
+tokenize = mapM charToToken . filter (/= ' ')
 
 parse :: String -> Either String Expr
-parse str =
-   ((>>= ast) . tokenize) str
+parse = (>>= ast) . tokenize
