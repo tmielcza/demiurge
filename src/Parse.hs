@@ -34,45 +34,45 @@ charToToken c
     | isAlpha c = Right (Letter c)
     | otherwise = Left $ "Lexing error near: " ++ show c
 
-add_expr op Nothing r = Just r
-add_expr op (Just l) r = Just (Grp op l r)
+addExpr op Nothing r = Just r
+addExpr op (Just l) r = Just (Grp op l r)
 
-ast_xor :: Maybe Expr -> [Token] -> (Maybe Expr, [Token])
-ast_xor expr rest =
-  case ast_or Nothing rest of
-    (Just expr_d, Operator Xor:rest_d) -> ast_xor (add_expr Xor expr expr_d) rest_d
-    (Just expr_d, RParen:rest_d) -> (add_expr Xor expr expr_d, rest_d)
-    (Just expr_d, rest_d) -> (add_expr Xor expr expr_d, rest_d)
+astXor :: Maybe Expr -> [Token] -> (Maybe Expr, [Token])
+astXor expr rest =
+  case astOr Nothing rest of
+    (Just expr_d, Operator Xor:rest_d) -> astXor (addExpr Xor expr expr_d) rest_d
+    (Just expr_d, RParen:rest_d) -> (addExpr Xor expr expr_d, rest_d)
+    (Just expr_d, rest_d) -> (addExpr Xor expr expr_d, rest_d)
     other -> other
 
-ast_or :: Maybe Expr -> [Token] -> (Maybe Expr, [Token])
-ast_or expr rest =
-  case ast_and Nothing rest of
-    (Just expr_d, Operator Or:rest_d) -> ast_or (add_expr Or expr expr_d) rest_d
-    (Just expr_d, rest_d) -> (add_expr Or expr expr_d, rest_d)
+astOr :: Maybe Expr -> [Token] -> (Maybe Expr, [Token])
+astOr expr rest =
+  case astAnd Nothing rest of
+    (Just expr_d, Operator Or:rest_d) -> astOr (addExpr Or expr expr_d) rest_d
+    (Just expr_d, rest_d) -> (addExpr Or expr expr_d, rest_d)
     other -> other
 
-ast_and :: Maybe Expr -> [Token] -> (Maybe Expr, [Token])
-ast_and expr rest =
-  case ast_not rest of
-    (Just expr_d, Operator And:rest_d) -> ast_and (add_expr And expr expr_d) rest_d
-    (Just expr_d, rest_d) -> (add_expr And expr expr_d, rest_d)
+astAnd :: Maybe Expr -> [Token] -> (Maybe Expr, [Token])
+astAnd expr rest =
+  case astNot rest of
+    (Just expr_d, Operator And:rest_d) -> astAnd (addExpr And expr expr_d) rest_d
+    (Just expr_d, rest_d) -> (addExpr And expr expr_d, rest_d)
     other -> other
 
-ast_not :: [Token] -> (Maybe Expr, [Token])
-ast_not (Bang:rest) =
-  case ast_not rest of
+astNot :: [Token] -> (Maybe Expr, [Token])
+astNot (Bang:rest) =
+  case astNot rest of
     (Just expr_d, rest_d) -> (Just (Not expr_d), rest_d)
     other -> other
-ast_not rest = ast_fact rest
+astNot rest = astFact rest
 
-ast_fact :: [Token] -> (Maybe Expr, [Token])
-ast_fact (LParen:rest) = ast_xor Nothing rest
-ast_fact (Letter f:rest) = (Just (Fact f), rest)
-ast_fact rest = (Nothing, rest)
+astFact :: [Token] -> (Maybe Expr, [Token])
+astFact (LParen:rest) = astXor Nothing rest
+astFact (Letter f:rest) = (Just (Fact f), rest)
+astFact rest = (Nothing, rest)
 
 ast tokens =
-  case ast_xor Nothing tokens of
+  case astXor Nothing tokens of
     (Just expr, []) -> Right expr
     (_, faulty:_) -> Left ("Unexpected token : " ++ show faulty)
     _ -> Left "Empty expression"
