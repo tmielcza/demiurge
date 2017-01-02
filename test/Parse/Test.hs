@@ -6,9 +6,9 @@ import Test.HUnit hiding (Test)
 import Parse
 import Data.Either.Unwrap
 
-parseTest str expect = ((testCase expect) . (assertEqual "" str) . show . fromRight . parse) expect
+parseTest str expect = (testCase expect . assertEqual "" str . show . fromRight . parse) expect
 
-parseErrorTest str = ((testCase str) . (assertBool str) . isLeft . parse) str
+parseErrorTest str = (testCase str . assertBool str . isLeft . parse) str
 
 parseSuite = testGroup "Parsing tests"
              [
