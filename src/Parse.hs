@@ -6,9 +6,9 @@ import Debug.Trace
 import Data.Char
 import Test.HUnit
 
-data Token = Letter Char | Operator Ope | Bang
+data Token = Letter Char | Operator Ope | Bang | LParen | RParen
     deriving(Show)
-data Ope = Xor | Or | And 
+data Ope = Xor | Or | And
     deriving(Eq, Ord)
 data Expr = Grp Ope Expr Expr | Fact Char | Not Expr
     deriving(Eq)
@@ -29,6 +29,8 @@ charToToken c
     | c == '+'  = Right (Operator And)
     | c == '^' = Right (Operator Xor)
     | c == '!' = Right Bang
+    | c == '(' = Right LParen
+    | c == ')' = Right RParen
     | isAlpha c = Right (Letter c)
     | otherwise = Left $ "Lexing error near: " ++ show c
 
@@ -39,6 +41,7 @@ ast_xor :: Maybe Expr -> [Token] -> (Maybe Expr, [Token])
 ast_xor expr rest =
   case ast_or Nothing rest of
     (Just expr_d, (Operator Xor):rest_d) -> ast_xor (add_expr Xor expr expr_d) rest_d
+    (Just expr_d, (RParen:rest_d)) -> ((add_expr Xor expr expr_d), rest_d)
     (Just expr_d, rest_d) -> ((add_expr Xor expr expr_d), rest_d)
     other -> other
 
@@ -64,6 +67,7 @@ ast_not (Bang:rest) =
 ast_not rest = ast_fact rest
 
 ast_fact :: [Token] -> (Maybe Expr, [Token])
+ast_fact (LParen:rest) = ast_xor Nothing rest
 ast_fact (Letter f:rest) = (Just (Fact f), rest)
 ast_fact rest = (Nothing, rest)
 
