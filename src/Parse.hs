@@ -80,7 +80,9 @@ ast :: [Token] -> Either String Expr
 ast tokens =
   case astXor Nothing tokens of
     (Just expr, []) -> Right expr
-    (_, tokens@(LParen:rest)) -> Left ("Mismatched parenthesis : " ++ show tokens)
+    (_, LParen:RParen:_) -> Left ("Empty parentheses")
+    (_, tokens@(LParen:_)) -> Left ("Mismatched parenthesis")
+    (_, tokens@(RParen:_)) -> Left ("Unexpected closing parentheses")
     (_, faulty:_) -> Left ("Unexpected token : " ++ show faulty)
     _ -> Left "Empty expression"
 
