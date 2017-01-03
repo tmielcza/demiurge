@@ -33,5 +33,15 @@ parseSuite = testGroup "Parsing tests"
                parseTest "(!A+!B)" "!A+!B",
                parseTest "(!!!!!!A^!!!!!B)" "!!!!!!A^!!!!!B",
                parseErrorTest "!",
-               parseErrorTest "!!!!"
+               parseErrorTest "!!!!",
+               -- parentheses parsing tests
+               parseTest "(c|(d+y))" "c | (d + y)",
+               parseTest "(c^(!(r|i)+p))" "c ^ !(r | i) + p",
+               parseTest "((c+!(r|i))^p)" "c + !(r | i) ^ p",
+               parseTest "((c+!(r|(v^o)))^p)" "c + !(r | (v ^ o)) ^ p",
+               parseTest "U" "(U)",
+               parseErrorTest "(a + b",
+               parseErrorTest "(a + b +)",
+               parseErrorTest "(a + b ))",
+               parseErrorTest "()"
              ]
