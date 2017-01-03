@@ -12,24 +12,26 @@ parseErrorTest str = (testCase str . assertBool str . isLeft . parse) str
 
 parseSuite = testGroup "Parsing tests"
              [
+               -- fact parsing tests
+               parseTest "A" "     A        ",
+               parseErrorTest "&",
+               parseErrorTest "1",
+               parseErrorTest "",
+               -- op parsing tests
                parseTest "((A+B)+C)" "A+B+C",
                parseTest "(A^(B|(C+D)))" "A^B|C+D",
                parseTest "(A^((B|C)|D))" "A^B|C|D",
                parseTest "((A^(B|C))^D)" "A^B|C^D",
                parseTest "((A^(B|(C+D)))^E)" "A^B|C+D^E",
-               parseTest "!A" "!A",
-               parseTest "(!A+!B)" "!A+!B",
-               parseTest "(!!!!!!A^!!!!!B)" "!!!!!!A^!!!!!B",
-               parseTest "A" "     A        ",
                parseErrorTest "+",
                parseErrorTest "AB",
                parseErrorTest "A+|",
-               parseErrorTest "",
                parseErrorTest "A|B+C^",
-               parseErrorTest "&",
-               parseErrorTest "1",
-               parseErrorTest "",
                parseErrorTest "A|A||",
+               -- not parsing tests
+               parseTest "!A" "!A",
+               parseTest "(!A+!B)" "!A+!B",
+               parseTest "(!!!!!!A^!!!!!B)" "!!!!!!A^!!!!!B",
                parseErrorTest "!",
                parseErrorTest "!!!!"
              ]
