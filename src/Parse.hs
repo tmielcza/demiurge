@@ -4,7 +4,6 @@ module Parse
 
 import Debug.Trace
 import Data.Char
-import Test.HUnit
 
 data Token = Letter Char | Operator Ope | Bang | LParen | RParen
     deriving(Show)
@@ -41,7 +40,6 @@ astXor :: Maybe Expr -> [Token] -> (Maybe Expr, [Token])
 astXor expr rest =
   case astOr Nothing rest of
     (Just expr_d, Operator Xor:rest_d) -> astXor (addExpr Xor expr expr_d) rest_d
-    (Just expr_d, RParen:rest_d) -> (addExpr Xor expr expr_d, rest_d)
     (Just expr_d, rest_d) -> (addExpr Xor expr expr_d, rest_d)
     other -> other
 
@@ -64,16 +62,25 @@ astNot (Bang:rest) =
   case astNot rest of
     (Just expr_d, rest_d) -> (Just (Not expr_d), rest_d)
     other -> other
-astNot rest = astFact rest
+astNot rest = astParen rest
+
+astParen :: [Token] -> (Maybe Expr, [Token])
+astParen tokens@(LParen:rest) =
+  case astXor Nothing rest of
+     (Just expr_d, RParen:rest_d) -> (Just expr_d, rest_d)
+     other -> (Nothing, tokens)
+astParen x = astFact x
 
 astFact :: [Token] -> (Maybe Expr, [Token])
 astFact (LParen:rest) = astXor Nothing rest
 astFact (Letter f:rest) = (Just (Fact f), rest)
 astFact rest = (Nothing, rest)
 
+ast :: [Token] -> Either String Expr
 ast tokens =
   case astXor Nothing tokens of
     (Just expr, []) -> Right expr
+    (_, tokens@(LParen:rest)) -> Left ("Mismatched parenthesis : " ++ show tokens)
     (_, faulty:_) -> Left ("Unexpected token : " ++ show faulty)
     _ -> Left "Empty expression"
 
