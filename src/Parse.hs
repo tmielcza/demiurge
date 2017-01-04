@@ -86,17 +86,6 @@ tokenize :: String -> Either String [Token]
 --tokenize = mapM charToToken . filter (/= ' ')
 tokenize str = fmap (reverse . snd)  (foldM toToken  ("", []) ( filter (/= ' ') str))
 
-charToToken :: Char -> Either String Token
-charToToken c
-    | c == '|' = Right (Operator Or)
-    | c == '+'  = Right (Operator And)
-    | c == '^' = Right (Operator Xor)
-    | c == '!' = Right Bang
-    | c == '(' = Right LParen
-    | c == ')' = Right RParen
-    | isAlpha c = Right (Letter c)
-    | otherwise = Left $ "Lexing error near: " ++ show c
-
 toToken:: (String, [Token]) -> Char -> Either String (String, [Token])
 
 
