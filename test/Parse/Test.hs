@@ -6,23 +6,23 @@ import Test.HUnit hiding (Test)
 import Parse
 import Data.Either.Unwrap
 
-parseTest str expect = (testCase expect . assertEqual "" str . show . fromRight . parse) expect
+parseTest str expect = (testCase str . assertEqual "" expect . show . fromRight . parse) str
 
 parseErrorTest str = (testCase str . assertBool str . isLeft . parse) str
 
 parseSuite = testGroup "Parsing tests"
              [
                -- fact parsing tests
-               parseTest "A" "     A        ",
+               parseTest "     A        " "A",
                parseErrorTest "&",
                parseErrorTest "1",
                parseErrorTest "",
                -- op parsing tests
-               parseTest "((A+B)+C)" "A+B+C",
-               parseTest "(A^(B|(C+D)))" "A^B|C+D",
-               parseTest "(A^((B|C)|D))" "A^B|C|D",
-               parseTest "((A^(B|C))^D)" "A^B|C^D",
-               parseTest "((A^(B|(C+D)))^E)" "A^B|C+D^E",
+               parseTest "A+B+C" "((A+B)+C)",
+               parseTest "A^B|C+D" "(A^(B|(C+D)))",
+               parseTest "A^B|C|D" "(A^((B|C)|D))",
+               parseTest "A^B|C^D" "((A^(B|C))^D)",
+               parseTest "A^B|C+D^E" "((A^(B|(C+D)))^E)",
                parseErrorTest "+",
                parseErrorTest "AB",
                parseErrorTest "A+|",
@@ -30,16 +30,16 @@ parseSuite = testGroup "Parsing tests"
                parseErrorTest "A|A||",
                -- not parsing tests
                parseTest "!A" "!A",
-               parseTest "(!A+!B)" "!A+!B",
-               parseTest "(!!!!!!A^!!!!!B)" "!!!!!!A^!!!!!B",
+               parseTest "!A+!B" "(!A+!B)",
+               parseTest "!!!!!!A^!!!!!B" "(!!!!!!A^!!!!!B)",
                parseErrorTest "!",
                parseErrorTest "!!!!",
                -- parentheses parsing tests
-               parseTest "(c|(d+y))" "c | (d + y)",
-               parseTest "(c^(!(r|i)+p))" "c ^ !(r | i) + p",
-               parseTest "((c+!(r|i))^p)" "c + !(r | i) ^ p",
-               parseTest "((c+!(r|(v^o)))^p)" "c + !(r | (v ^ o)) ^ p",
-               parseTest "U" "(U)",
+               parseTest "c | (d + y)" "(c|(d+y))" ,
+               parseTest "c ^ !(r | i) + p" "(c^(!(r|i)+p))" ,
+               parseTest "c + !(r | i) ^ p" "((c+!(r|i))^p)" ,
+               parseTest "c + !(r | (v ^ o)) ^ p" "((c+!(r|(v^o)))^p)" ,
+               parseTest "(U)" "U",
                parseErrorTest "(a + b",
                parseErrorTest "(a + b +)",
                parseErrorTest "(a + b ))",
