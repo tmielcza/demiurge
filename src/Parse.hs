@@ -10,7 +10,7 @@ import Data.Char
 import Control.Monad
 
 data Token = Letter Char | Operator Ope | Bang | LParen | RParen | InitTk | QueryTk
-    deriving(Show)
+--    deriving(Show)
 data Ope = Xor | Or | And | Eq | Imply
     deriving(Eq, Ord)
 data Expr = Grp Ope Expr Expr | Fact Char | Not Expr
@@ -33,6 +33,19 @@ instance Show Expr where
     show (Grp o e1 e2) = "(" ++ show e1 ++ show o ++ show e2 ++ ")"
     show (Fact c) = [c]
     show (Not expr) = "!" ++ show expr
+
+instance Show Token where
+    show (Letter c) = [c]
+    show (Operator op) = show op
+    show Bang = "!"
+    show LParen = "("
+    show RParen = ")"
+    show InitTk = "="
+    show QueryTk = "?"
+    showList xs = (++ "[" ++ showListTokens xs "" ++ "]")
+
+showListTokens (x:xs) str = showListTokens xs (str ++ show x)
+showListTokens [] str = str
 
 addExpr op Nothing r = Just r
 addExpr op (Just l) r = Just (Grp op l r)
