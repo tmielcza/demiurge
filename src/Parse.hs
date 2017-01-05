@@ -98,16 +98,11 @@ extractFacts:: [Expr] -> Token -> Either String [Expr]
 extractFacts acc (Letter c) = Right (Fact c:acc)
 extractFacts _ tk = Left ("The token should be a letter and it's " ++ show tk)
 
--- Fait d'un tableau de Facts ou d'un expression des Line dont le constructeur est func
-exprsToLine func ret =
-  case ret of
-    Right(line) -> Right(func(line))
-    Left err    -> Left err
 
 -- Prends une liste de Tokens pour les transformer en Line dans l'ordre: Init, Query, Rule
-tokensToLine (InitTk:tokens) = exprsToLine (Init . reverse) (foldM extractFacts [] tokens)
-tokensToLine (QueryTk:tokens) = exprsToLine (Query . reverse) (foldM extractFacts [] tokens)
-tokensToLine tokens = exprsToLine Rule (ast tokens)
+tokensToLine (InitTk:tokens) = fmap (Init . reverse) (foldM extractFacts [] tokens)
+tokensToLine (QueryTk:tokens) = fmap (Query . reverse) (foldM extractFacts [] tokens)
+tokensToLine tokens = fmap Rule (ast tokens)
 
 checkReturn (Just expr, [])                       = Right expr
 checkReturn (_, LParen:RParen:_)                  = Left ("Empty parentheses")
