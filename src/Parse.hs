@@ -94,7 +94,7 @@ checkReturn (_, tokens@(LParen:_))  = Left ("Mismatched parenthesis")
 checkReturn (_, tokens@(RParen:_))  = Left ("Unexpected closing parentheses")
 checkReturn (_, faulty:_)           = Left ("Unexpected token : " ++ show faulty)
 checkReturn (Nothing , [])          = Left ("Missing relation operator")
-checkReturn _                       = Left "Empty expression"
+--checkReturn _                       = Left "Empty expression"
 
 
 tokenize :: String -> Either String [Token]
@@ -102,6 +102,7 @@ tokenize :: String -> Either String [Token]
 tokenize str = fmap (reverse . snd)  (foldM toToken  ("", []) ( filter (/= ' ') str))
 
 toToken:: (String, [Token]) -> Char -> Either String (String, [Token])
+toToken ("#" , acc) _ = Right ("#", acc)
 toToken ("" , acc) c
   | c == '+' = Right ("", Operator And:acc)
   | c == '|' = Right ("", Operator Or:acc)
@@ -111,6 +112,7 @@ toToken ("" , acc) c
   | c == ')' = Right ("", RParen:acc)
   | c == '<' = Right ("<", acc)
   | c == '=' = Right ("=", acc)
+  | c == '#' = Right ("#", acc)
   | isAlpha c = Right ("", Letter c:acc)
   | otherwise = Left ("Lexical error near" ++ [c])
 --toToken ("" , acc) '<' = Right ("<", acc)
@@ -118,7 +120,7 @@ toToken ("<" , acc) '=' = Right ("<=", acc)
 toToken ("<=" , acc) '>' = Right ("", Operator Eq:acc)
 --toToken ("" , acc) '=' = Right ("=", acc)
 toToken ("=" , acc) '>' = Right ("", Operator Imply:acc)
-toToken _ c = Left ("Lexical error near" ++ [c])
+toToken _ c = Left ("Lexical error near " ++ [c])
 
 parse :: String -> Either String Expr
 parse str = tokenize str >>= ast
