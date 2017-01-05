@@ -21,16 +21,25 @@ instance Show Ope where
     show Eq = "<=>"
     show Imply = "=>"
 
-
 instance Show Expr where
     show (Grp o e1 e2) = "(" ++ show e1 ++ show o ++ show e2 ++ ")"
     show (Fact c) = [c]
     show (Not expr) = "!" ++ show expr
 
-
-
 addExpr op Nothing r = Just r
 addExpr op (Just l) r = Just (Grp op l r)
+
+astEq :: Maybe Expr -> [Token] -> (Maybe Expr, [Token])
+astEq expr rest =
+  case astXor Nothing rest of
+    (Just expr_d, Operator Eq:rest_d) -> case astXor Nothing rest_d of
+      (Just expr_d2, rest_d) -> (Just (Grp Eq expr_d expr_d2), rest_d)
+      other -> other
+    (Just expr_d, Operator Imply:rest_d) -> case astXor Nothing rest_d of
+      (Just expr_d2, rest_d) -> (Just (Grp Imply expr_d expr_d2), rest_d)
+      other -> other
+    (Just _, []) -> (Nothing, [])
+    other -> other
 
 astXor :: Maybe Expr -> [Token] -> (Maybe Expr, [Token])
 astXor expr rest =
