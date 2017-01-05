@@ -1,5 +1,8 @@
 module Parse
-( parse
+( parse,
+  checkReturn,
+  tokenize,
+  astXor
 ) where
 
 import Debug.Trace
@@ -12,7 +15,6 @@ data Ope = Xor | Or | And | Eq | Imply
     deriving(Eq, Ord)
 data Expr = Grp Ope Expr Expr | Fact Char | Not Expr
     deriving(Eq)
-
 
 instance Show Ope where
     show Or = "|"
@@ -81,23 +83,25 @@ astFact (LParen:rest) = astXor Nothing rest
 astFact (Letter f:rest) = (Just (Fact f), rest)
 astFact rest = (Nothing, rest)
 
+
+
 ast :: [Token] -> Either String Expr
-ast tokens =
-  case astXor Nothing tokens of
-    (Just expr, []) -> Right expr
-    (_, LParen:RParen:_) -> Left ("Empty parentheses")
-    (_, tokens@(LParen:_)) -> Left ("Mismatched parenthesis")
-    (_, tokens@(RParen:_)) -> Left ("Unexpected closing parentheses")
-    (_, faulty:_) -> Left ("Unexpected token : " ++ show faulty)
-    _ -> Left "Empty expression"
+ast = checkReturn . (astEq Nothing)
+
+checkReturn (Just expr, [])         = Right expr
+checkReturn (_, LParen:RParen:_)    = Left ("Empty parentheses")
+checkReturn (_, tokens@(LParen:_))  = Left ("Mismatched parenthesis")
+checkReturn (_, tokens@(RParen:_))  = Left ("Unexpected closing parentheses")
+checkReturn (_, faulty:_)           = Left ("Unexpected token : " ++ show faulty)
+checkReturn (Nothing , [])          = Left ("Missing relation operator")
+checkReturn _                       = Left "Empty expression"
+
 
 tokenize :: String -> Either String [Token]
 --tokenize = mapM charToToken . filter (/= ' ')
 tokenize str = fmap (reverse . snd)  (foldM toToken  ("", []) ( filter (/= ' ') str))
 
 toToken:: (String, [Token]) -> Char -> Either String (String, [Token])
-
-
 toToken ("" , acc) c
   | c == '+' = Right ("", Operator And:acc)
   | c == '|' = Right ("", Operator Or:acc)
