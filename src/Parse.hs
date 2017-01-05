@@ -105,18 +105,22 @@ tokensToLine (QueryTk:tokens) = fmap (Query . reverse) (foldM extractFacts [] to
 tokensToLine tokens = fmap Rule (ast tokens)
 
 checkReturn (Just expr, [])                       = Right expr
+checkReturn (Nothing , [Operator Imply])          = Left ("Missing relation operator")
+checkReturn (Nothing , [])                        = Left ("Missing relation operator")
 checkReturn (_, LParen:RParen:_)                  = Left ("Empty parentheses")
 checkReturn (_, tokens@(LParen:_))                = Left ("Mismatched parenthesis")
 checkReturn (_, tokens@(RParen:_))                = Left ("Unexpected closing parentheses")
 checkReturn (_, faulty:_)                         = Left ("Unexpected token : " ++ show faulty)
-checkReturn (Nothing , [Operator Imply])          = Left ("Missing relation operator")
-checkReturn (Nothing , [])                        = Left ("Missing relation operator")
 -- les lignes vides ne doivent pas provoquer d'erreur
 --checkReturn _                       = Left "Empty expression"
 
 
 tokenize :: String -> Either String [Token]
-tokenize str = fmap (reverse . snd)  (foldM toToken  ("", []) ( filter (/= ' ') str))
+tokenize str = case foldM toToken  ("", []) ( filter (/= ' ') str) of
+  Right ("", res) -> Right (reverse res)
+  Right ("#", res) -> Right (reverse res)
+  Right (_, res) -> Left "Lexical error"
+  Left error -> Left error
 
 toToken:: (String, [Token]) -> Char -> Either String (String, [Token])
 toToken ("" , acc) '<' = Right ("<", acc)
