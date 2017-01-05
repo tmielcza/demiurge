@@ -1,4 +1,4 @@
-import Parse
+import Parse(parse)
 
 main = do putStrLn "Expr: "
           x <- getLine
