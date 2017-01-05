@@ -47,15 +47,25 @@ parseSuite = testGroup "Parsing tests"
                astXorErrorTest "(A + B +)",
                astXorErrorTest "(A + B ))",
                astXorErrorTest "()",
-               --Implication tests
+               --Implication and Equivalence tests
                parseTest "A => B" "(A=>B)",
                parseTest "A <=> B" "(A<=>B)",
                parseTest "A + C <=> B" "((A+C)<=>B)",
                parseTest "A ^ C <=> B | D" "((A^C)<=>(B|D))",
                parseTest "A + (C | P) <=> B" "((A+(C|P))<=>B)",
                parseErrorTest "A => + B",
-               parseErrorTest "A + => B"
-               parseErrorTest "A => B => C"
-               parseErrorTest "(B => C)"
+               parseErrorTest "A + => B",
+               parseErrorTest "A => B => C",
+               parseErrorTest "(B => C)",
 
+               --Query and Initials facts tests
+               parseTest "=ABC" "Init[A,B,C]",
+               parseTest "=" "Init[]",
+               parseTest "?PON" "Query[P,O,N]",
+               parseErrorTest "=+",
+               parseErrorTest "=ABC+R",
+               parseErrorTest "=A(BCR)",
+               parseErrorTest "?|",
+               parseErrorTest "?@",
+               parseErrorTest "?ABC+R"-- les Query peuvent-elles etre empty?
              ]
