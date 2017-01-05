@@ -98,7 +98,6 @@ astParen tokens@(LParen:rest) =
 astParen x = astFact x
 
 astFact :: [Token] -> (Maybe Expr, [Token])
-astFact (LParen:rest) = astXor Nothing rest
 astFact (Letter f:rest) = (Just (Fact f), rest)
 astFact rest = (Nothing, rest)
 
