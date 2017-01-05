@@ -40,7 +40,7 @@ astEq expr rest =
     (Just expr_d, Operator Imply:rest_d) -> case astXor Nothing rest_d of
       (Just expr_d2, rest_d) -> (Just (Grp Imply expr_d expr_d2), rest_d)
       other -> other
-    (Just _, []) -> (Nothing, [])
+    (Just _, []) -> (Nothing, [Operator Imply])
     other -> other
 
 astXor :: Maybe Expr -> [Token] -> (Maybe Expr, [Token])
@@ -88,12 +88,14 @@ astFact rest = (Nothing, rest)
 ast :: [Token] -> Either String Expr
 ast = checkReturn . (astEq Nothing)
 
-checkReturn (Just expr, [])         = Right expr
-checkReturn (_, LParen:RParen:_)    = Left ("Empty parentheses")
-checkReturn (_, tokens@(LParen:_))  = Left ("Mismatched parenthesis")
-checkReturn (_, tokens@(RParen:_))  = Left ("Unexpected closing parentheses")
-checkReturn (_, faulty:_)           = Left ("Unexpected token : " ++ show faulty)
-checkReturn (Nothing , [])          = Left ("Missing relation operator")
+checkReturn (Just expr, [])                       = Right expr
+checkReturn (_, LParen:RParen:_)                  = Left ("Empty parentheses")
+checkReturn (_, tokens@(LParen:_))                = Left ("Mismatched parenthesis")
+checkReturn (_, tokens@(RParen:_))                = Left ("Unexpected closing parentheses")
+checkReturn (_, faulty:_)                         = Left ("Unexpected token : " ++ show faulty)
+checkReturn (Nothing , [Operator Imply])          = Left ("Missing relation operator")
+checkReturn (Nothing , [])                        = Left ("Missing relation operator")
+-- les lignes vides ne doivent pas provoquer d'erreur
 --checkReturn _                       = Left "Empty expression"
 
 
@@ -102,6 +104,13 @@ tokenize :: String -> Either String [Token]
 tokenize str = fmap (reverse . snd)  (foldM toToken  ("", []) ( filter (/= ' ') str))
 
 toToken:: (String, [Token]) -> Char -> Either String (String, [Token])
+toToken ("" , acc) '<' = Right ("<", acc)
+toToken ("<" , acc) '=' = Right ("<=", acc)
+toToken ("<=" , acc) '>' = Right ("", Operator Eq:acc)
+toToken ("" , []) '=' = Right ("", [InitTk])
+toToken ("" , []) '?' = Right ("", [QueryTk])
+toToken ("" , acc) '=' = Right ("=", acc)
+toToken ("=" , acc) '>' = Right ("", Operator Imply:acc)
 toToken ("#" , acc) _ = Right ("#", acc)
 toToken ("" , acc) c
   | c == '+' = Right ("", Operator And:acc)
@@ -110,16 +119,9 @@ toToken ("" , acc) c
   | c == '!' = Right ("", Bang:acc)
   | c == '(' = Right ("", LParen:acc)
   | c == ')' = Right ("", RParen:acc)
-  | c == '<' = Right ("<", acc)
-  | c == '=' = Right ("=", acc)
   | c == '#' = Right ("#", acc)
   | isAlpha c = Right ("", Letter c:acc)
   | otherwise = Left ("Lexical error near" ++ [c])
---toToken ("" , acc) '<' = Right ("<", acc)
-toToken ("<" , acc) '=' = Right ("<=", acc)
-toToken ("<=" , acc) '>' = Right ("", Operator Eq:acc)
---toToken ("" , acc) '=' = Right ("=", acc)
-toToken ("=" , acc) '>' = Right ("", Operator Imply:acc)
 toToken _ c = Left ("Lexical error near " ++ [c])
 
 parse :: String -> Either String Expr
