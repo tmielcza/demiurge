@@ -118,13 +118,12 @@ tokensToLine tokens = fmap Rule (ast tokens)
 
 checkReturn (Just expr, [])                       = Right expr
 checkReturn (Nothing , [Operator Imply])          = Left ("Missing relation operator")
-checkReturn (Nothing , [])                        = Left ("Missing relation operator")
+checkReturn (Nothing, [])                         = Left "Unexpected end of line"
 checkReturn (_, LParen:RParen:_)                  = Left ("Empty parentheses")
 checkReturn (_, tokens@(LParen:_))                = Left ("Mismatched parenthesis")
 checkReturn (_, tokens@(RParen:_))                = Left ("Unexpected closing parentheses")
 checkReturn (_, faulty:_)                         = Left ("Unexpected token : " ++ show faulty)
 -- les lignes vides ne doivent pas provoquer d'erreur
---checkReturn _                       = Left "Empty expression"
 
 
 tokenize :: String -> Either String [Token]
