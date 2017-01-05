@@ -7,19 +7,28 @@ import Parse
 import Data.Either.Unwrap
 
 parseTest str expect = (testCase str . assertEqual "" expect . show . fromRight . parse) str
-parseErrorTest str = (testCase str . assertBool str . isLeft . parse) str
+parseErrorTest str = (testCase str . assertBool "Must fail" . isLeft . parse) str
 
 astXorTest str expect = (testCase str . assertEqual "" expect . show . fromRight .  (>>= (checkReturn . (astXor Nothing))) . tokenize) str
-astXorErrorTest str = (testCase str . assertBool str . isLeft . (>>= (checkReturn . (astXor Nothing))) . tokenize) str
+astXorErrorTest str = (testCase str . assertBool "Must fail" . isLeft . (>>= (checkReturn . (astXor Nothing))) . tokenize) str
 
+tokenizeTest str expect = (testCase str . assertEqual "" expect . show . fromRight . tokenize) str
+tokenizeErrorTest str = (testCase str . assertBool "Must fail" . isLeft . tokenize) str
 
 parseSuite = testGroup "Parsing tests"
              [
-               -- fact tests
-               astXorTest "     A        " "A",
-               astXorErrorTest "&",
-               astXorErrorTest "1",
-               astXorErrorTest "",
+               -- tokenizer tests
+               tokenizeErrorTest "<=",
+               tokenizeErrorTest "<",
+               tokenizeErrorTest "< = >",
+               tokenizeErrorTest "= >",
+               tokenizeErrorTest "&",
+               tokenizeErrorTest "1",
+               tokenizeTest "" "[]",
+               tokenizeTest "     A        " "[A]",
+               tokenizeTest "     #comment        " "[]",
+               tokenizeTest "<=>" "[<=>]",
+               tokenizeTest "=>" "[=>]",
                -- op tests
                astXorTest "A+B+C" "((A+B)+C)",
                astXorTest "A^B|C+D" "(A^(B|(C+D)))",
