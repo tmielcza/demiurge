@@ -9,12 +9,18 @@ import Debug.Trace
 import Data.Char
 import Control.Monad
 
-data Token = Letter Char | Operator Ope | Bang | LParen | RParen
+data Token = Letter Char | Operator Ope | Bang | LParen | RParen | InitTk | QueryTk
     deriving(Show)
 data Ope = Xor | Or | And | Eq | Imply
     deriving(Eq, Ord)
 data Expr = Grp Ope Expr Expr | Fact Char | Not Expr
     deriving(Eq)
+data Line = Rule Expr | Init [Expr] | Query [Expr]
+
+instance Show Line where
+    show (Rule exp) = show exp
+    show (Init facts) = "Init" ++ show facts
+    show (Query facts) = "Query" ++ show facts
 
 instance Show Ope where
     show Or = "|"
