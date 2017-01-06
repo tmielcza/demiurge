@@ -1,15 +1,14 @@
 module Parse
 ( parse,
   checkReturn,
-  tokenize,
   astXor
 ) where
 
 import Debug.Trace
-import Data.Char
 import Control.Monad
+import Lexing
 
-data Token = Letter Char | Operator Ope | Bang | LParen | RParen | InitTk | QueryTk
+
 --    deriving(Show)
 data Ope = Xor | Or | And | Eq | Imply
     deriving(Eq, Ord)
@@ -34,18 +33,7 @@ instance Show Expr where
     show (Fact c) = [c]
     show (Not expr) = "!" ++ show expr
 
-instance Show Token where
-    show (Letter c) = [c]
-    show (Operator op) = show op
-    show Bang = "!"
-    show LParen = "("
-    show RParen = ")"
-    show InitTk = "="
-    show QueryTk = "?"
-    showList xs = (++ "[" ++ showListTokens xs "" ++ "]")
 
-showListTokens (x:xs) str = showListTokens xs (str ++ show x)
-showListTokens [] str = str
 
 addExpr op Nothing r = Just r
 addExpr op (Just l) r = Just (Grp op l r)
@@ -53,33 +41,33 @@ addExpr op (Just l) r = Just (Grp op l r)
 astEq :: Maybe Expr -> [Token] -> (Maybe Expr, [Token])
 astEq expr rest =
   case astXor Nothing rest of
-    (Just expr_d, Operator Eq:rest_d) -> case astXor Nothing rest_d of
+    (Just expr_d, DArrow:rest_d) -> case astXor Nothing rest_d of
       (Just expr_d2, rest_d) -> (Just (Grp Eq expr_d expr_d2), rest_d)
       other -> other
-    (Just expr_d, Operator Imply:rest_d) -> case astXor Nothing rest_d of
+    (Just expr_d, Arrow:rest_d) -> case astXor Nothing rest_d of
       (Just expr_d2, rest_d) -> (Just (Grp Imply expr_d expr_d2), rest_d)
       other -> other
-    (Just _, []) -> (Nothing, [Operator Imply])
+    (Just _, []) -> (Nothing, [Arrow])
     other -> other
 
 astXor :: Maybe Expr -> [Token] -> (Maybe Expr, [Token])
 astXor expr rest =
   case astOr Nothing rest of
-    (Just expr_d, Operator Xor:rest_d) -> astXor (addExpr Xor expr expr_d) rest_d
+    (Just expr_d, Caret:rest_d) -> astXor (addExpr Xor expr expr_d) rest_d
     (Just expr_d, rest_d) -> (addExpr Xor expr expr_d, rest_d)
     other -> other
 
 astOr :: Maybe Expr -> [Token] -> (Maybe Expr, [Token])
 astOr expr rest =
   case astAnd Nothing rest of
-    (Just expr_d, Operator Or:rest_d) -> astOr (addExpr Or expr expr_d) rest_d
+    (Just expr_d, Pipe:rest_d) -> astOr (addExpr Or expr expr_d) rest_d
     (Just expr_d, rest_d) -> (addExpr Or expr expr_d, rest_d)
     other -> other
 
 astAnd :: Maybe Expr -> [Token] -> (Maybe Expr, [Token])
 astAnd expr rest =
   case astNot rest of
-    (Just expr_d, Operator And:rest_d) -> astAnd (addExpr And expr expr_d) rest_d
+    (Just expr_d, Plus:rest_d) -> astAnd (addExpr And expr expr_d) rest_d
     (Just expr_d, rest_d) -> (addExpr And expr expr_d, rest_d)
     other -> other
 
@@ -117,7 +105,7 @@ tokensToLine (QueryTk:tokens) = fmap (Query . reverse) (foldM extractFacts [] to
 tokensToLine tokens = fmap Rule (ast tokens)
 
 checkReturn (Just expr, [])                       = Right expr
-checkReturn (Nothing , [Operator Imply])          = Left ("Missing relation operator")
+checkReturn (Nothing , [Arrow])          = Left ("Missing relation operator")
 checkReturn (Nothing, [])                         = Left "Unexpected end of line"
 checkReturn (_, LParen:RParen:_)                  = Left ("Empty parentheses")
 checkReturn (_, tokens@(LParen:_))                = Left ("Mismatched parenthesis")
@@ -126,33 +114,6 @@ checkReturn (_, faulty:_)                         = Left ("Unexpected token : " 
 -- les lignes vides ne doivent pas provoquer d'erreur
 
 
-tokenize :: String -> Either String [Token]
-tokenize str = case foldM toToken  ("", []) ( filter (/= ' ') str) of
-  Right ("", res) -> Right (reverse res)
-  Right ("#", res) -> Right (reverse res)
-  Right (_, res) -> Left "Lexical error"
-  Left error -> Left error
-
-toToken:: (String, [Token]) -> Char -> Either String (String, [Token])
-toToken ("" , acc) '<' = Right ("<", acc)
-toToken ("<" , acc) '=' = Right ("<=", acc)
-toToken ("<=" , acc) '>' = Right ("", Operator Eq:acc)
-toToken ("" , []) '=' = Right ("", [InitTk])
-toToken ("" , []) '?' = Right ("", [QueryTk])
-toToken ("" , acc) '=' = Right ("=", acc)
-toToken ("=" , acc) '>' = Right ("", Operator Imply:acc)
-toToken ("#" , acc) _ = Right ("#", acc)
-toToken ("" , acc) c
-  | c == '+' = Right ("", Operator And:acc)
-  | c == '|' = Right ("", Operator Or:acc)
-  | c == '^' = Right ("", Operator Xor:acc)
-  | c == '!' = Right ("", Bang:acc)
-  | c == '(' = Right ("", LParen:acc)
-  | c == ')' = Right ("", RParen:acc)
-  | c == '#' = Right ("#", acc)
-  | isAlpha c = Right ("", Letter c:acc)
-  | otherwise = Left ("Lexical error near" ++ [c])
-toToken _ c = Left ("Lexical error near " ++ [c])
 
 parse :: String -> Either String Line
 parse str = tokenize str >>= tokensToLine

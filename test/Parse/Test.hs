@@ -4,6 +4,7 @@ import Test.Framework (testGroup, Test)
 import Test.Framework.Providers.HUnit
 import Test.HUnit hiding (Test)
 import Parse
+import Lexing
 import Data.Either.Unwrap
 
 parseTest str expect = (testCase str . assertEqual "" expect . show . fromRight . parse) str
