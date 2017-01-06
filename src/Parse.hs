@@ -35,6 +35,7 @@ instance Show Expr where
 
 
 
+addExpr :: Ope -> Maybe Expr -> Expr -> Maybe Expr
 addExpr op Nothing r = Just r
 addExpr op (Just l) r = Just (Grp op l r)
 
@@ -100,10 +101,13 @@ extractFacts _ tk = Left ("The token should be a letter and it's " ++ show tk)
 
 
 -- Prends une liste de Tokens pour les transformer en Line dans l'ordre: Init, Query, Rule
+tokensToLine :: [Token] -> Either String Line
 tokensToLine (InitTk:tokens) = fmap (Init . reverse) (foldM extractFacts [] tokens)
 tokensToLine (QueryTk:tokens) = fmap (Query . reverse) (foldM extractFacts [] tokens)
 tokensToLine tokens = fmap Rule (ast tokens)
 
+
+checkReturn :: (Maybe Expr, [Token]) -> Either String Expr
 checkReturn (Just expr, [])                       = Right expr
 checkReturn (Nothing , [Arrow])          = Left ("Missing relation operator")
 checkReturn (Nothing, [])                         = Left "Unexpected end of line"
@@ -117,3 +121,5 @@ checkReturn (_, faulty:_)                         = Left ("Unexpected token : " 
 
 parse :: String -> Either String Line
 parse str = tokenize str >>= tokensToLine
+
+
