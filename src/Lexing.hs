@@ -39,20 +39,22 @@ showListTokens (x:xs) str = showListTokens xs (str ++ show x)
 showListTokens [] str = str
 
 tokenize :: String -> Either String [Token]
-tokenize str = case foldM toToken  ("", []) ( filter (/= ' ') str) of
+tokenize str = case foldM toToken  ("", []) (str) of
   Right ("", res) -> Right (reverse res)
   Right ("#", res) -> Right (reverse res)
+  Right ("=", []) -> Right [InitTk]
   Right (_, res) -> Left "Lexical error"
   Left error -> Left error
 
 toToken:: (String, [Token]) -> Char -> Either String (String, [Token])
+toToken(_, acc) ' ' = Right("", acc)
 toToken ("" , acc) '<' = Right ("<", acc)
 toToken ("<" , acc) '=' = Right ("<=", acc)
 toToken ("<=" , acc) '>' = Right ("", DArrow:acc)
-toToken ("" , []) '=' = Right ("", [InitTk])
 toToken ("" , []) '?' = Right ("", [QueryTk])
 toToken ("" , acc) '=' = Right ("=", acc)
 toToken ("=" , acc) '>' = Right ("", Arrow:acc)
+toToken ("=" , []) c = toToken ("", [InitTk]) c
 toToken ("#" , acc) _ = Right ("#", acc)
 toToken ("" , acc) c
   | c == '+' = Right ("", Plus:acc)
