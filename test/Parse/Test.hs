@@ -10,8 +10,8 @@ import Data.Either.Unwrap
 parseTest str expect = (testCase str . assertEqual "" expect . show . fromRight . parse) str
 parseErrorTest str = (testCase str . assertBool "Must fail" . isLeft . parse) str
 
-astXorTest str expect = (testCase str . assertEqual "" expect . show . fromRight .  (>>= (checkReturn . (astXor Nothing))) . tokenize) str
-astXorErrorTest str = (testCase str . assertBool "Must fail" . isLeft . (>>= (checkReturn . (astXor Nothing))) . tokenize) str
+astXorTest str expect = (testCase str . assertEqual "" expect . show . fromRight .  (>>= (checkReturn . astXor)) . tokenize) str
+astXorErrorTest str = (testCase str . assertBool "Must fail" . isLeft . (>>= (checkReturn . astXor )) . tokenize) str
 
 tokenizeTest str expect = (testCase str . assertEqual "" expect . show . fromRight . tokenize) str
 tokenizeErrorTest str = (testCase str . assertBool "Must fail" . isLeft . tokenize) str
