@@ -111,13 +111,13 @@ tokensToLine tokens = fmap Rule (ast tokens)
 
 
 checkReturn :: (Maybe Expr, [Token]) -> Either String Expr
-checkReturn (Just expr, [])                       = Right expr
-checkReturn (Nothing , [Arrow])          = Left ("Missing relation operator")
-checkReturn (Nothing, [])                         = Left "Unexpected end of line"
-checkReturn (_, LParen:RParen:_)                  = Left ("Empty parentheses")
-checkReturn (_, tokens@(LParen:_))                = Left ("Mismatched parenthesis")
-checkReturn (_, tokens@(RParen:_))                = Left ("Unexpected closing parentheses")
-checkReturn (_, faulty:_)                         = Left ("Unexpected token : " ++ show faulty)
+checkReturn (Just expr, [])         = Right expr
+checkReturn (Nothing , [Arrow])     = Left ("Missing relation operator")
+checkReturn (Nothing, [])           = Left "Unexpected end of line"
+checkReturn (_, LParen:RParen:_)    = Left ("Empty parentheses")
+checkReturn (_, LParen:_)           = Left ("Mismatched parenthesis")
+checkReturn (_, RParen:_)           = Left ("Unexpected closing parentheses")
+checkReturn (_, faulty:_)           = Left ("Unexpected token : " ++ show faulty)
 -- les lignes vides ne doivent pas provoquer d'erreur
 
 
