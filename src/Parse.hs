@@ -8,23 +8,33 @@ import Text.ParserCombinators.ReadP
 import Data.Char(isLetter, isSpace)
 import Control.Monad
 
-data Ope = Xor | Or | And | Eq | Imply
-    deriving(Eq, Ord)
-data Expr = Grp Ope Expr Expr | Fact String | Not Expr | Init [Expr] | Query [Expr]
-    deriving(Eq)
+data Expr = Xor Expr Expr |
+            Or Expr Expr |
+            And Expr Expr |
+            Fact String |
+            Not Expr
 
-instance Show Ope where
-    show Or = "|"
-    show And = "+"
-    show Xor = "^"
-    show Eq = "<=>"
-    show Imply = "=>"
+data Relation = Eq Expr Expr | Imply Expr Expr
+
+newtype Init = Init [String]
+
+newtype Query = Query [String]
 
 instance Show Expr where
-    show (Grp o e1 e2) = "(" ++ show e1 ++ show o ++ show e2 ++ ")"
+    show (Xor e1 e2) = "(" ++ show e1 ++ "^" ++ show e2 ++ ")"
+    show (Or e1 e2) = "(" ++ show e1 ++ "|" ++ show e2 ++ ")"
+    show (And e1 e2) = "(" ++ show e1 ++ "+" ++ show e2 ++ ")"
     show (Fact c) = c
-    show (Not expr) = "!" ++ show expr
+    show (Not e) = "!" ++ show e
+
+instance Show Relation where
+    show (Imply e1 e2) = "(" ++ show e1 ++ "=>" ++ show e2 ++ ")"
+    show (Eq e1 e2) = "(" ++ show e1 ++ "<=>" ++ show e2 ++ ")"
+
+instance Show Init where
     show (Init facts) = "Init: "++ show facts
+
+instance Show Query where
     show (Query facts) = "Query: "++ show facts
 
 {-
@@ -58,10 +68,10 @@ factor = fact +++ do { char '(' ; x <- expr ; char ')'; return x} +++ do { char 
 fact = do {x <- many1 (satisfy (isLetter)); return (Fact x)}
 newlineList = skipMany1 (char '\n')
 
-relationOp = do { string "=>"; return (Grp Imply) } +++ do { string "<=>"; return (Grp Eq) }
-xorOp = do { char '^'; return (Grp Xor) }
-orOp = do { char '|'; return (Grp Or) }
-andOp = do { char '+'; return (Grp And) }
+relationOp = do { string "=>"; return (Imply) } +++ do { string "<=>"; return (Eq) }
+xorOp = do { char '^'; return (Xor) }
+orOp = do { char '|'; return (Or) }
+andOp = do { char '+'; return (And) }
 
 parse s = case readP_to_S expr s of
   (x, _):_ -> Right x
