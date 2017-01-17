@@ -10,7 +10,7 @@ import Control.Monad
 
 data Ope = Xor | Or | And | Eq | Imply
     deriving(Eq, Ord)
-data Expr = Grp Ope Expr Expr | Fact String | Not Expr
+data Expr = Grp Ope Expr Expr | Fact String | Not Expr | Init [Expr] | Query [Expr]
     deriving(Eq)
 
 instance Show Ope where
@@ -24,21 +24,23 @@ instance Show Expr where
     show (Grp o e1 e2) = "(" ++ show e1 ++ show o ++ show e2 ++ ")"
     show (Fact c) = c
     show (Not expr) = "!" ++ show expr
+    show (Init facts) = "Init: "++ show facts
+    show (Query facts) = "Query: "++ show facts
 
 {-
-program         ::=     expr EOF
+program         ::=     relationList,initFacts,query,EOF
 relationList    ::=     {relationList newlineList} , relation [newlineList]
-relation        ::=     expr '=>' expr | expr '<=>' expr
-expr            ::=     expr '^' orBlock | orBlock
-orBlock         ::=     orBlock '|' andBlock | andBlock
-andBlock        ::=     andBlock '+' factorBlanks | factorBlanks
-factorBlanks    ::=     whitespaces factor whitespaces
-factor          ::=     fact | '(' expr ')' | '!' factor
-fact            ::=     fact | letter
-letter          ::=     'a' - 'z' | 'A' - 'Z'
-newlineList     ::=     newlineList | '\n'
-whitespaces     ::=     blanks |
-blanks          ::=     blanks | ' ' | '\t'
+relation        ::=     expr, ('=>' | '<=>'), expr
+initFacts       ::=     '=',{fact},[newlineList]
+queries         ::=     '?',{fact},[newlineList]
+expr            ::=     [{orBlock, '+'}], orBlock
+orBlock         ::=     [{andBlock, '+'}], andBlock
+andBlock        ::=     [{factor, '+'}], factor
+factor          ::=     whitespaces, [{'!'}], (fact | '(', expr, ')'), whitespaces
+fact            ::=     {letter}
+letter          ::=     ('a' - 'z') | ('A' - 'Z')
+newlineList     ::=     {'\n'}
+whitespaces     ::=     [{' ' | '\t'}]
 -}
 
 program = do { x <- relationList; eof; return x }
