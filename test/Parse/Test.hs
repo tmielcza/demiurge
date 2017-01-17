@@ -6,19 +6,22 @@ import Test.HUnit hiding (Test)
 import Parse
 import Lexing
 import Data.Either.Unwrap
+import Text.ParserCombinators.ReadP
 
-parseTest str expect = (testCase str . assertEqual "" expect . show . fromRight . parse) str
-parseErrorTest str = (testCase str . assertBool "Must fail" . isLeft . parse) str
+exhaustivePattern f str = [x | (x, "") <- readP_to_S f str]
 
-astXorTest str expect = (testCase str . assertEqual "" expect . show . fromRight .  (>>= (checkReturn . astXor)) . tokenize) str
-astXorErrorTest str = (testCase str . assertBool "Must fail" . isLeft . (>>= (checkReturn . astXor )) . tokenize) str
+parseTest str expect =  (testCase str . assertEqual "" expect . show . head . fst . head . (readP_to_S program)) str
+parseErrorTest str = (testCase str . assertBool "Must fail" . null . (readP_to_S program)) str
 
-tokenizeTest str expect = (testCase str . assertEqual "" expect . show . fromRight . tokenize) str
-tokenizeErrorTest str = (testCase str . assertBool "Must fail" . isLeft . tokenize) str
+astXorTest str expect = (testCase str . assertEqual "" expect . show . head . (exhaustivePattern expr)) str
+astXorErrorTest str = (testCase str . assertBool "Must fail" . null . (exhaustivePattern expr)) str
+
+-- tokenizeTest str expect = (testCase str . assertEqual "" expect . show . fromRight . tokenize) str
+-- tokenizeErrorTest str = (testCase str . assertBool "Must fail" . isLeft . tokenize) str
 
 parseSuite = testGroup "Parsing tests"
              [
-               -- tokenizer tests
+               {-- tokenizer tests
                tokenizeErrorTest "<=",
                tokenizeErrorTest "<",
                tokenizeErrorTest "< = >",
@@ -29,7 +32,7 @@ parseSuite = testGroup "Parsing tests"
                tokenizeTest "     A        " "[A]",
                tokenizeTest "     #comment        " "[]",
                tokenizeTest "<=>" "[<=>]",
-               tokenizeTest "=>" "[=>]",
+               tokenizeTest "=>" "[=>]",-}
                -- op tests
                astXorTest "A+B+C" "((A+B)+C)",
                astXorTest "A^B|C+D" "(A^(B|(C+D)))",
@@ -37,7 +40,7 @@ parseSuite = testGroup "Parsing tests"
                astXorTest "A^B|C^D" "((A^(B|C))^D)",
                astXorTest "A^B|C+D^E" "((A^(B|(C+D)))^E)",
                astXorErrorTest "+",
-               astXorErrorTest "AB",
+               astXorErrorTest "A B",
                astXorErrorTest "A+|",
                astXorErrorTest "A|B+C^",
                astXorErrorTest "A|A||",
