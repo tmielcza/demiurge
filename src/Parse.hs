@@ -44,7 +44,7 @@ endOfLine       =   [comment], newline
 newline         =   '\n'
 whitespaces     =   whitespace, {whitespace}
 whitespace      =   ' ' | '\t'
-comment         =   '#', {allCharExceptNewline}
+comment         =   '#', {anyCharExceptNewline}
 -}
 
 program = do { x <- relationList; eof; return x }
