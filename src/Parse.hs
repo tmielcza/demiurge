@@ -31,8 +31,8 @@ instance Show Expr where
 program         =   whitespaces, [relations], newlines, [initFacts], newlines, [query], EOF
 relations       =   relation, {newlines, relation}
 relation        =   expr, ("=>" | "<=>"), expr
-initFacts       =   '=', fact, {fact}
-queries         =   '?', fact, {fact}
+initFacts       =   '=', [whitespaces], fact, {[whitespaces], fact}
+queries         =   '?', [whitespaces], fact, {[whitespaces], fact}
 expr            =   {orBlock, '+'}, orBlock
 orBlock         =   {andBlock, '+'}, andBlock
 andBlock        =   {factor, '+'}, factor
