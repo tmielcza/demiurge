@@ -28,19 +28,23 @@ instance Show Expr where
     show (Query facts) = "Query: "++ show facts
 
 {-
-program         ::=     relationList,initFacts,query,EOF
-relationList    ::=     {relationList newlineList} , relation [newlineList]
-relation        ::=     expr, ('=>' | '<=>'), expr
-initFacts       ::=     '=',{fact},[newlineList]
-queries         ::=     '?',{fact},[newlineList]
-expr            ::=     [{orBlock, '+'}], orBlock
-orBlock         ::=     [{andBlock, '+'}], andBlock
-andBlock        ::=     [{factor, '+'}], factor
-factor          ::=     whitespaces, [{'!'}], (fact | '(', expr, ')'), whitespaces
-fact            ::=     {letter}
-letter          ::=     ('a' - 'z') | ('A' - 'Z')
-newlineList     ::=     {'\n'}
-whitespaces     ::=     [{' ' | '\t'}]
+program         =   whitespaces, [relations], newlines, [initFacts], newlines, [query], EOF
+relations       =   relation, {newlines, relation}
+relation        =   expr, ("=>" | "<=>"), expr
+initFacts       =   '=', fact, {fact}
+queries         =   '?', fact, {fact}
+expr            =   {orBlock, '+'}, orBlock
+orBlock         =   {andBlock, '+'}, andBlock
+andBlock        =   {factor, '+'}, factor
+factor          =   [whitespaces], {'!'}, (fact | '(', expr, ')'), [whitespaces]
+fact            =   letter, {letter}
+letter          =   ('a' - 'z') | ('A' - 'Z')
+newlines        =   {endOfLine, [whitespaces]}, endOfLine
+endOfLine       =   [comment], newline
+newline         =   '\n'
+whitespaces     =   whitespace, {whitespace}
+whitespace      =   ' ' | '\t'
+comment         =   '#', {allCharExceptNewline}
 -}
 
 program = do { x <- relationList; eof; return x }
