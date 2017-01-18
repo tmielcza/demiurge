@@ -10,14 +10,21 @@ import Text.ParserCombinators.ReadP
 
 exhaustivePattern f str = [x | (x, "") <- readP_to_S f str]
 
+
 parseTest str expect =  (testCase str . assertEqual "" expect . show . head . fst . head . (readP_to_S program)) str
 parseErrorTest str = (testCase str . assertBool "Must fail" . null . (readP_to_S program)) str
 
+queryTest str expect = (testCase str . assertEqual "" expect . show . head . (exhaustivePattern queryFacts)) str
+queryErrorTest str = (testCase str . assertBool "Must fail" . null . (exhaustivePattern queryFacts)) str
+
+initTest str expect = (testCase str . assertEqual "" expect . show . head . (exhaustivePattern initFacts)) str
+initErrorTest str = (testCase str . assertBool "Must fail" . null . (exhaustivePattern initFacts)) str
+
+relationTest str expect = (testCase str . assertEqual "" expect . show . head . (exhaustivePattern relation)) str
+relationErrorTest str = (testCase str . assertBool "Must fail" . null . (exhaustivePattern relation)) str
+
 exprTest str expect = (testCase str . assertEqual "" expect . show . head . (exhaustivePattern expr)) str
 exprErrorTest str = (testCase str . assertBool "Must fail" . null . (exhaustivePattern expr)) str
-
--- tokenizeTest str expect = (testCase str . assertEqual "" expect . show . fromRight . tokenize) str
--- tokenizeErrorTest str = (testCase str . assertBool "Must fail" . isLeft . tokenize) str
 
 parseSuite = testGroup "Parsing tests"
              [
@@ -58,30 +65,33 @@ parseSuite = testGroup "Parsing tests"
                ],
                testGroup "Relations Tests"
                [
-                 parseTest "A => B" "(A=>B)",
-                 parseTest "A <=> B" "(A<=>B)",
-                 parseTest "A + C <=> B" "((A+C)<=>B)",
-                 parseTest "A ^ C <=> B | D" "((A^C)<=>(B|D))",
-                 parseTest "A + (C | P) <=> B" "((A+(C|P))<=>B)",
-                 parseErrorTest "A => + B",
-                 parseErrorTest "A + => B",
-                 parseErrorTest "A => B => C",
-                 parseErrorTest "(B => C)"
+                 relationTest "A => B" "(A=>B)",
+                 relationTest "A <=> B" "(A<=>B)",
+                 relationTest "A + C <=> B" "((A+C)<=>B)",
+                 relationTest "A ^ C <=> B | D" "((A^C)<=>(B|D))",
+                 relationTest "A + (C | P) <=> B" "((A+(C|P))<=>B)",
+                 relationErrorTest "A => + B",
+                 relationErrorTest "A + => B",
+                 relationErrorTest "A => B => C",
+                 relationErrorTest "(B => C)"
                ],
                testGroup "Queries Tests"
                [
-                 parseTest "=ABC" "Init[A,B,C]",
-                 parseTest "=" "Init[]",
-                 parseErrorTest "=+",
-                 parseErrorTest "=ABC+R",
-                 parseErrorTest "=A(BCR)"
-                 -- les Query peuvent-elles etre empty?
+                 initTest "=ABC D" "Init: [ABC,D]",
+                 initTest "= A !B C" "Init: [A,!B,C]",
+                 initTest "=" "Init: []",
+                 initErrorTest "=+",
+                 initErrorTest "=ABC+R",
+                 initErrorTest "=A(BCR)"
                ],
                testGroup "Initial Facts Tests"
                [
-                 parseTest "?PON" "Query[P,O,N]",
-                 parseErrorTest "?|",
-                 parseErrorTest "?@",
-                 parseErrorTest "?ABC+R"
+                 queryTest "?P O N" "Query: [P,O,N]",
+                 queryTest "? P O N" "Query: [P,O,N]",
+                 queryErrorTest "?|",
+                 queryErrorTest "?@",
+                 queryErrorTest "? A B C + R",
+                 queryErrorTest "? ABC+R",
+                 queryErrorTest "? A B C !R"
                ]
              ]

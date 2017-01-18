@@ -1,6 +1,9 @@
 module Parse
 ( parse,
   program,
+  relation,
+  initFacts,
+  queryFacts,
   expr
     ) where
 
