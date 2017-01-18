@@ -20,6 +20,9 @@ queryErrorTest str = (testCase str . assertBool "Must fail" . null . (exhaustive
 initTest str expect = (testCase str . assertEqual "" expect . show . head . (exhaustivePattern initFacts)) str
 initErrorTest str = (testCase str . assertBool "Must fail" . null . (exhaustivePattern initFacts)) str
 
+relationListTest str expect = (testCase str . assertEqual "" expect . show . head . (exhaustivePattern relationList)) str
+relationListErrorTest str = (testCase str . assertBool "Must fail" . null . (exhaustivePattern relationList)) str
+
 relationTest str expect = (testCase str . assertEqual "" expect . show . head . (exhaustivePattern relation)) str
 relationErrorTest str = (testCase str . assertBool "Must fail" . null . (exhaustivePattern relation)) str
 
@@ -28,7 +31,7 @@ exprErrorTest str = (testCase str . assertBool "Must fail" . null . (exhaustiveP
 
 parseSuite = testGroup "Parsing tests"
              [
-               testGroup "Expression Tests"
+               testGroup "Expression"
                [
                  exprTest "A+B+C" "((A+B)+C)",
                  exprTest "A^B|C+D" "(A^(B|(C+D)))",
@@ -41,7 +44,7 @@ parseSuite = testGroup "Parsing tests"
                  exprErrorTest "A|B+C^",
                  exprErrorTest "A|A||"
                ],
-               testGroup "Not Tests"
+               testGroup "Not"
                [
                  exprTest "!A" "!A",
                  exprTest "!A+!B" "(!A+!B)",
@@ -49,7 +52,7 @@ parseSuite = testGroup "Parsing tests"
                  exprErrorTest "!",
                  exprErrorTest "!!!!"
                ],
-               testGroup "Parentheses Tests"
+               testGroup "Parentheses"
                [
                  exprTest "C | (D + Y)" "(C|(D+Y))" ,
                  exprTest "C ^ !(R | I) + P" "(C^(!(R|I)+P))" ,
@@ -63,7 +66,7 @@ parseSuite = testGroup "Parsing tests"
                  exprErrorTest "()",
                  exprErrorTest "(((("
                ],
-               testGroup "Relations Tests"
+               testGroup "Relations"
                [
                  relationTest "A => B" "(A=>B)",
                  relationTest "A <=> B" "(A<=>B)",
@@ -75,7 +78,15 @@ parseSuite = testGroup "Parsing tests"
                  relationErrorTest "A => B => C",
                  relationErrorTest "(B => C)"
                ],
-               testGroup "Queries Tests"
+               testGroup "Blanks / Comments"
+               [
+                 relationListTest "A => B#CDRR\n  C=>D"  "[(A=>B),(C=>D)]",
+                 relationListTest "A => B#CDRR\n"  "[(A=>B)]",
+                 relationListTest "A => B#CDRR\n#Comments\n"  "[(A=>B)]",
+                 relationListTest "A => B\n  E <=> O\n"  "[(A=>B),((R+E)<=>O)]",
+                 relationListErrorTest "A => B #CDRR"
+               ],
+               testGroup "Queries"
                [
                  initTest "=ABC D" "Init: [ABC,D]",
                  initTest "= A !B C" "Init: [A,!B,C]",
@@ -84,11 +95,12 @@ parseSuite = testGroup "Parsing tests"
                  initErrorTest "=ABC+R",
                  initErrorTest "=A(BCR)"
                ],
-               testGroup "Initial Facts Tests"
+               testGroup "Initial Facts"
                [
                  queryTest "?P O N" "Query: [P,O,N]",
                  queryTest "? P O N" "Query: [P,O,N]",
                  queryErrorTest "?|",
+                 queryErrorTest "?",
                  queryErrorTest "?@",
                  queryErrorTest "? A B C + R",
                  queryErrorTest "? ABC+R",

@@ -2,6 +2,7 @@ module Parse
 ( parse,
   program,
   relation,
+  relationList,
   initFacts,
   queryFacts,
   expr
