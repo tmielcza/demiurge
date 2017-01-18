@@ -38,22 +38,21 @@ instance Show Query where
     show (Query facts) = "Query: "++ show facts
 
 {-
-program         =   {whitespace}, [relations], newlines, [initFacts], newlines, [query], EOF
+program         =   whitespaces, [relations], newlines, [initFacts], newlines, [query], EOF
 relations       =   relation, {newlines, relation}
 relation        =   expr, ("=>" | "<=>"), expr
-initFacts       =   '=', {whitespace}, fact, {{whitespace}, fact}
-queries         =   '?', {whitespace}, fact, {{whitespace}, fact}
+initFacts       =   '=', whitespaces, fact, {whitespaces, fact}
+queries         =   '?', whitespaces, fact, {whitespaces, fact}
 expr            =   {orBlock, '+'}, orBlock
 orBlock         =   {andBlock, '+'}, andBlock
 andBlock        =   {factor, '+'}, factor
-factor          =   {whitespace}, {'!'}, (fact | '(', expr, ')'), {whitespace}
+factor          =   whitespaces, {'!'}, (fact | '(', expr, ')'), whitespaces
 fact            =   upCaseLetter, {downcaseletter | '_'}
 upCaseLetter    =   ('A' - 'Z')
 downCaseLetter  =   ('a' - 'z')
-newlines        =   {endOfLine, {whitespace}}, endOfLine
-endOfLine       =   [comment], newline
-newline         =   '\n'
-whitespace      =   ' ' | '\t'
+newlines        =   {endOfLine, whitespaces}, endOfLine
+endOfLine       =   [comment], '\n'
+whitespaces     =   {' ' | '\t'}
 comment         =   '#', {anyCharExceptNewline}
 -}
 
