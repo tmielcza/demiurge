@@ -16,9 +16,9 @@ data Expr = Xor Expr Expr |
 
 data Relation = Eq Expr Expr | Imply Expr Expr
 
-newtype Init = Init [String]
+newtype Init = Init [Expr] -- ce sont des expressions pas des strings qui seront renvoyés et un init peut etre a not
 
-newtype Query = Query [String]
+newtype Query = Query [Expr]
 
 instance Show Expr where
     show (Xor e1 e2) = "(" ++ show e1 ++ "^" ++ show e2 ++ ")"
@@ -41,12 +41,13 @@ instance Show Query where
   program         =   whitespaces, [relations, newlines, initFacts, newlines, query], EOF (* le fait qu'il y ait une relation avant un init est bien une regle de lexing *)
   relations       =   relation, {newlines, relation}
   relation        =   expr, ("=>" | "<=>"), expr
-  initFacts       =   '=', whitespaces, factor, {whitespaces, factor}
+  initFacts       =   '=', {whitespaces, binaryFact}
   queries         =   '?', whitespaces, fact, {whitespaces, fact}
   expr            =   {orBlock, '+'}, orBlock
   orBlock         =   {andBlock, '+'}, andBlock
   andBlock        =   {factor, '+'}, factor
   factor          =   whitespaces, {'!'}, (fact | '(', expr, ')'), whitespaces
+  binaryFact      =   whitespaces, {'!'}, fact, whitespaces
   fact            =   upCaseLetter, {downcaseletter | '_'}
   upCaseLetter    =   ('A' - 'Z')
   downCaseLetter  =   ('a' - 'z')
@@ -56,17 +57,20 @@ instance Show Query where
   comment         =   '#', {anyCharExceptNewline}
 -}
 
-program = do { x <- relationList; eof; return x }
+
+program = do { rules <- relationList; newlineList; facts <- initFacts; newlineList;  query <- queryFacts; newlineList; eof;  return (rules, facts, query) }
 relationList = do { x <- relation `sepBy` newlineList; optional newlineList; return x}
 relation = do {x <- expr; op <- relationOp; y <- expr; return (op x y)}
 expr =  orBlock `chainl1` xorOp
 orBlock = andBlock `chainl1` orOp
 andBlock = factorBlanks `chainl1` andOp
 factorBlanks = do { skipSpaces; x <- factor; skipSpaces; return x }
+initFacts = do {char '=';skipSpaces; x <- (binaryFact `sepBy1` (char ' ')) +++ (return []); return (Init x)}
+queryFacts = do {char '?';skipSpaces; x <- fact `sepBy1` (char ' ') ; return (Query x)}
+binaryFact = fact +++ do { char '!' ; x <- fact; return (Not x)}
 factor = fact +++ do { char '(' ; x <- expr ; char ')'; return x} +++ do { char '!' ; x <- factor; return (Not x)}
 fact = do {x <- many1 (satisfy (isLetter)); return (Fact x)}
 newlineList = skipMany1 (char '\n')
-
 relationOp = do { string "=>"; return (Imply) } +++ do { string "<=>"; return (Eq) }
 xorOp = do { char '^'; return (Xor) }
 orOp = do { char '|'; return (Or) }
