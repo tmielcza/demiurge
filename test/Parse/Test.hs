@@ -13,72 +13,76 @@ exhaustivePattern f str = [x | (x, "") <- readP_to_S f str]
 parseTest str expect =  (testCase str . assertEqual "" expect . show . head . fst . head . (readP_to_S program)) str
 parseErrorTest str = (testCase str . assertBool "Must fail" . null . (readP_to_S program)) str
 
-astXorTest str expect = (testCase str . assertEqual "" expect . show . head . (exhaustivePattern expr)) str
-astXorErrorTest str = (testCase str . assertBool "Must fail" . null . (exhaustivePattern expr)) str
+exprTest str expect = (testCase str . assertEqual "" expect . show . head . (exhaustivePattern expr)) str
+exprErrorTest str = (testCase str . assertBool "Must fail" . null . (exhaustivePattern expr)) str
 
 -- tokenizeTest str expect = (testCase str . assertEqual "" expect . show . fromRight . tokenize) str
 -- tokenizeErrorTest str = (testCase str . assertBool "Must fail" . isLeft . tokenize) str
 
 parseSuite = testGroup "Parsing tests"
              [
-               {-- tokenizer tests
-               tokenizeErrorTest "<=",
-               tokenizeErrorTest "<",
-               tokenizeErrorTest "< = >",
-               tokenizeErrorTest "= >",
-               tokenizeErrorTest "&",
-               tokenizeErrorTest "1",
-               tokenizeTest "" "[]",
-               tokenizeTest "     A        " "[A]",
-               tokenizeTest "     #comment        " "[]",
-               tokenizeTest "<=>" "[<=>]",
-               tokenizeTest "=>" "[=>]",-}
-               -- op tests
-               astXorTest "A+B+C" "((A+B)+C)",
-               astXorTest "A^B|C+D" "(A^(B|(C+D)))",
-               astXorTest "A^B|C|D" "(A^((B|C)|D))",
-               astXorTest "A^B|C^D" "((A^(B|C))^D)",
-               astXorTest "A^B|C+D^E" "((A^(B|(C+D)))^E)",
-               astXorErrorTest "+",
-               astXorErrorTest "A B",
-               astXorErrorTest "A+|",
-               astXorErrorTest "A|B+C^",
-               astXorErrorTest "A|A||",
-               -- not tests
-               astXorTest "!A" "!A",
-               astXorTest "!A+!B" "(!A+!B)",
-               astXorTest "!!!!!!A^!!!!!B" "(!!!!!!A^!!!!!B)",
-               astXorErrorTest "!",
-               astXorErrorTest "!!!!",
-               -- parentheses tests
-               astXorTest "C | (D + Y)" "(C|(D+Y))" ,
-               astXorTest "C ^ !(R | I) + P" "(C^(!(R|I)+P))" ,
-               astXorTest "C + !(R | I) ^ P" "((C+!(R|I))^P)" ,
-               astXorTest "C + !(R | (V ^ O)) ^ P" "((C+!(R|(V^O)))^P)" ,
-               astXorTest "(U)" "U",
-               astXorErrorTest "(A + B",
-               astXorErrorTest "(A + B +)",
-               astXorErrorTest "(A + B ))",
-               astXorErrorTest "()",
-               --Implication and Equivalence tests
-               parseTest "A => B" "(A=>B)",
-               parseTest "A <=> B" "(A<=>B)",
-               parseTest "A + C <=> B" "((A+C)<=>B)",
-               parseTest "A ^ C <=> B | D" "((A^C)<=>(B|D))",
-               parseTest "A + (C | P) <=> B" "((A+(C|P))<=>B)",
-               parseErrorTest "A => + B",
-               parseErrorTest "A + => B",
-               parseErrorTest "A => B => C",
-               parseErrorTest "(B => C)",
-
-               --Query and Initials facts tests
-               parseTest "=ABC" "Init[A,B,C]",
-               parseTest "=" "Init[]",
-               parseTest "?PON" "Query[P,O,N]",
-               parseErrorTest "=+",
-               parseErrorTest "=ABC+R",
-               parseErrorTest "=A(BCR)",
-               parseErrorTest "?|",
-               parseErrorTest "?@",
-               parseErrorTest "?ABC+R"-- les Query peuvent-elles etre empty?
+               testGroup "Expression Tests"
+               [
+                 exprTest "A+B+C" "((A+B)+C)"
+                 exprTest "A+B+C" "((A+B)+C)",
+                 exprTest "A^B|C+D" "(A^(B|(C+D)))",
+                 exprTest "A^B|C|D" "(A^((B|C)|D))",
+                 exprTest "A^B|C^D" "((A^(B|C))^D)",
+                 exprTest "A^B|C+D^E" "((A^(B|(C+D)))^E)",
+                 exprErrorTest "+",
+                 exprErrorTest "A B",
+                 exprErrorTest "A+|",
+                 exprErrorTest "A|B+C^",
+                 exprErrorTest "A|A||"
+               ],
+               testGroup "Not Tests"
+               [
+                 exprTest "!A" "!A",
+                 exprTest "!A+!B" "(!A+!B)",
+                 exprTest "!!!!!!A^!!!!!B" "(!!!!!!A^!!!!!B)",
+                 exprErrorTest "!",
+                 exprErrorTest "!!!!"
+               ],
+               testGroup "Parentheses Tests"
+               [
+                 exprTest "C | (D + Y)" "(C|(D+Y))" ,
+                 exprTest "C ^ !(R | I) + P" "(C^(!(R|I)+P))" ,
+                 exprTest "C + !(R | I) ^ P" "((C+!(R|I))^P)" ,
+                 exprTest "C + !(R | (V ^ O)) ^ P" "((C+!(R|(V^O)))^P)" ,
+                 exprTest "((((((U))))+(((((((F)))))))))" "(U+F)",
+                 exprTest "(U)" "U",
+                 exprErrorTest "(A + B",
+                 exprErrorTest "(A + B +)",
+                 exprErrorTest "(A + B ))",
+                 exprErrorTest "()"
+                 exprErrorTest "(((("
+               ],
+               testGroup "Relations Tests"
+               [
+                 parseTest "A => B" "(A=>B)",
+                 parseTest "A <=> B" "(A<=>B)",
+                 parseTest "A + C <=> B" "((A+C)<=>B)",
+                 parseTest "A ^ C <=> B | D" "((A^C)<=>(B|D))",
+                 parseTest "A + (C | P) <=> B" "((A+(C|P))<=>B)",
+                 parseErrorTest "A => + B",
+                 parseErrorTest "A + => B",
+                 parseErrorTest "A => B => C",
+                 parseErrorTest "(B => C)"
+               ],
+               testGroup "Queries Tests"
+               [
+                 parseTest "=ABC" "Init[A,B,C]",
+                 parseTest "=" "Init[]",
+                 parseErrorTest "=+",
+                 parseErrorTest "=ABC+R",
+                 parseErrorTest "=A(BCR)"
+                 -- les Query peuvent-elles etre empty?
+               ],
+               testGroup "Initial Facts Tests"
+               [
+                 parseTest "?PON" "Query[P,O,N]",
+                 parseErrorTest "?|",
+                 parseErrorTest "?@",
+                 parseErrorTest "?ABC+R"
+               ]
              ]
