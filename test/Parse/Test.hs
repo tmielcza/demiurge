@@ -23,7 +23,6 @@ parseSuite = testGroup "Parsing tests"
              [
                testGroup "Expression Tests"
                [
-                 exprTest "A+B+C" "((A+B)+C)"
                  exprTest "A+B+C" "((A+B)+C)",
                  exprTest "A^B|C+D" "(A^(B|(C+D)))",
                  exprTest "A^B|C|D" "(A^((B|C)|D))",
@@ -54,7 +53,7 @@ parseSuite = testGroup "Parsing tests"
                  exprErrorTest "(A + B",
                  exprErrorTest "(A + B +)",
                  exprErrorTest "(A + B ))",
-                 exprErrorTest "()"
+                 exprErrorTest "()",
                  exprErrorTest "(((("
                ],
                testGroup "Relations Tests"
