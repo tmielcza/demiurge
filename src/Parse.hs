@@ -41,7 +41,7 @@ instance Show Query where
     show (Query facts) = "Query: "++ show facts
 
 {-
-  program         =   whitespaces, [relations, newlines, initFacts, newlines, query], EOF (* le fait qu'il y ait une relation avant un init est bien une regle de lexing *)
+  program         =   whitespaces, newlines, [relations, newlines, initFacts, newlines, query, [newlines]] EOF
   relations       =   relation, {newlines, relation}
   relation        =   expr, ("=>" | "<=>"), expr
   initFacts       =   '=', {whitespaces, binaryFact}
@@ -56,8 +56,8 @@ instance Show Query where
   downCaseLetter  =   ('a' - 'z')
   newlines        =   {endOfLine, whitespaces}, endOfLine
   endOfLine       =   [comment], '\n'
+  comment         =   whitespaces, '#', {anyCharExceptNewline}
   whitespaces     =   {' ' | '\t'}
-  comment         =   '#', {anyCharExceptNewline}
 -}
 
 
@@ -73,11 +73,13 @@ queryFacts = do {char '?';skipSpaces; x <- fact `sepBy1` (char ' ') ; return (Qu
 binaryFact = fact +++ do { char '!' ; x <- fact; return (Not x)}
 factor = fact +++ do { char '(' ; x <- expr ; char ')'; return x} +++ do { char '!' ; x <- factor; return (Not x)}
 fact = do {x <- many1 (satisfy (isLetter)); return (Fact x)}
-newlineList = skipMany1 (char '\n')
 relationOp = do { string "=>"; return (Imply) } +++ do { string "<=>"; return (Eq) }
 xorOp = do { char '^'; return (Xor) }
 orOp = do { char '|'; return (Or) }
 andOp = do { char '+'; return (And) }
+newlineList = skipMany1(endOfLine)
+endOfLine = do {optional comment; char '\n'; return ()}
+comment = do {skipSpaces; char '#'; munch(/= '\n'); return ()}
 
 parse s = case readP_to_S expr s of
   (x, _):_ -> Right x
