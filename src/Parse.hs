@@ -38,22 +38,22 @@ instance Show Query where
     show (Query facts) = "Query: "++ show facts
 
 {-
-program         =   whitespaces, [relations], newlines, [initFacts], newlines, [query], EOF
-relations       =   relation, {newlines, relation}
-relation        =   expr, ("=>" | "<=>"), expr
-initFacts       =   '=', whitespaces, fact, {whitespaces, fact}
-queries         =   '?', whitespaces, fact, {whitespaces, fact}
-expr            =   {orBlock, '+'}, orBlock
-orBlock         =   {andBlock, '+'}, andBlock
-andBlock        =   {factor, '+'}, factor
-factor          =   whitespaces, {'!'}, (fact | '(', expr, ')'), whitespaces
-fact            =   upCaseLetter, {downcaseletter | '_'}
-upCaseLetter    =   ('A' - 'Z')
-downCaseLetter  =   ('a' - 'z')
-newlines        =   {endOfLine, whitespaces}, endOfLine
-endOfLine       =   [comment], '\n'
-whitespaces     =   {' ' | '\t'}
-comment         =   '#', {anyCharExceptNewline}
+  program         =   whitespaces, [relations, newlines, initFacts, newlines, query], EOF (* le fait qu'il y ait une relation avant un init est bien une regle de lexing *)
+  relations       =   relation, {newlines, relation}
+  relation        =   expr, ("=>" | "<=>"), expr
+  initFacts       =   '=', whitespaces, factor, {whitespaces, factor}
+  queries         =   '?', whitespaces, fact, {whitespaces, fact}
+  expr            =   {orBlock, '+'}, orBlock
+  orBlock         =   {andBlock, '+'}, andBlock
+  andBlock        =   {factor, '+'}, factor
+  factor          =   whitespaces, {'!'}, (fact | '(', expr, ')'), whitespaces
+  fact            =   upCaseLetter, {downcaseletter | '_'}
+  upCaseLetter    =   ('A' - 'Z')
+  downCaseLetter  =   ('a' - 'z')
+  newlines        =   {endOfLine, whitespaces}, endOfLine
+  endOfLine       =   [comment], '\n'
+  whitespaces     =   {' ' | '\t'}
+  comment         =   '#', {anyCharExceptNewline}
 -}
 
 program = do { x <- relationList; eof; return x }
