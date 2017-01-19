@@ -9,7 +9,7 @@ module Parse
     ) where
 
 import Text.ParserCombinators.ReadP
-import Data.Char(isLetter, isSpace)
+import Data.Char(isLower, isUpper)
 import Control.Monad
 
 data Expr = Xor Expr Expr |
@@ -61,26 +61,26 @@ instance Show Query where
   whitespaces     =   {' ' | '\t'}
 -}
 
-
 program = do { rules <- relationList; newlineList; facts <- initFacts; newlineList;  query <- queryFacts; newlineList; eof;  return (rules, facts, query) }
-relationList = do { x <- relation `sepBy` newlineList; optional newlineList; return x}
+relationList = do { x <- relation `sepBy` newlineList; optional comment; optional newlineList; return x}
 relation = do {x <- expr; op <- relationOp; y <- expr; return (op x y)}
 expr =  orBlock `chainl1` xorOp
 orBlock = andBlock `chainl1` orOp
 andBlock = factorBlanks `chainl1` andOp
-factorBlanks = do { skipSpaces; x <- factor; skipSpaces; return x }
-initFacts = do {char '=';skipSpaces; x <- (binaryFact `sepBy1` (char ' ')) +++ (return []); return (Init x)}
-queryFacts = do {char '?';skipSpaces; x <- fact `sepBy1` (char ' ') ; return (Query x)}
+factorBlanks = do { spaces; x <- factor; spaces; return x }
+initFacts = do {char '='; spaces; x <- binaryFact `sepBy` spaces; return (Init x)}
+queryFacts = do {char '?'; spaces; x <- fact `sepBy1` spaces ; return (Query x)}
 binaryFact = fact +++ do { char '!' ; x <- fact; return (Not x)}
 factor = fact +++ do { char '(' ; x <- expr ; char ')'; return x} +++ do { char '!' ; x <- factor; return (Not x)}
-fact = do {x <- many1 (satisfy (isLetter)); return (Fact x)}
+fact = do {y <- satisfy isUpper; x <- many (satisfy isLower +++ char '_'); return (Fact (y:x))}
 relationOp = do { string "=>"; return (Imply) } +++ do { string "<=>"; return (Eq) }
 xorOp = do { char '^'; return (Xor) }
 orOp = do { char '|'; return (Or) }
 andOp = do { char '+'; return (And) }
 newlineList = skipMany1(endOfLine)
-endOfLine = do {optional comment; char '\n'; return ()}
-comment = do {skipSpaces; char '#'; munch(/= '\n'); return ()}
+endOfLine = do {spaces; optional comment ; char '\n'; return ()}
+comment = do {char '#'; munch(/= '\n'); return ()}
+spaces = do {munch (\c -> c == ' ' || c == '\t'); return ()}
 
 parse s = case readP_to_S expr s of
   (x, _):_ -> Right x
