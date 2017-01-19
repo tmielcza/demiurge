@@ -110,7 +110,7 @@ parseSuite = testGroup "Parsing tests"
                  queryErrorTest "? A B C + R",
                  queryErrorTest "? ABC+R",
                  queryErrorTest "? A B C !R",
-                 queryErrorTest ""
+                 queryErrorTest "",
                  queryErrorTest "allyourbasearebelongtous"
                ]
              ]
