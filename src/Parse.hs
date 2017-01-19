@@ -82,6 +82,6 @@ endOfLine = do {spaces; optional comment ; char '\n'; return ()}
 comment = do {char '#'; munch(/= '\n'); return ()}
 spaces = do {munch (\c -> c == ' ' || c == '\t'); return ()}
 
-parse s = case readP_to_S expr s of
+parse s = case readP_to_S program s of
   (x, _):_ -> Right x
   _ -> Left "Error"
