@@ -82,28 +82,35 @@ parseSuite = testGroup "Parsing tests"
                [
                  relationListTest "A => B#CDRR\n  C=>D"  "[(A=>B),(C=>D)]",
                  relationListTest "A => B#CDRR\n"  "[(A=>B)]",
-                 relationListTest "A => B#CDRR\n#Comments\n"  "[(A=>B)]",
-                 relationListTest "A => B\n  E <=> O\n"  "[(A=>B),((R+E)<=>O)]",
-                 relationListErrorTest "A => B #CDRR"
+                 relationListTest "A => B  #CDRR\n#Comments\n"  "[(A=>B)]",
+                 relationListTest "A => B  \n  E <=> O"  "[(A=>B),(E<=>O)]",
+                 relationListTest "A => B #CDRR" "[(A=>B)]",
+                 relationListErrorTest ""
                ],
                testGroup "Queries"
                [
-                 initTest "=ABC D" "Init: [ABC,D]",
-                 initTest "= A !B C" "Init: [A,!B,C]",
+                 initTest "=ABCD" "Init: [A,B,C,D]",
+                 initTest "= A    BC D" "Init: [A,B,C,D]",
+                 initTest "= A!BC" "Init: [A,!B,C]",
                  initTest "=" "Init: []",
+                 initTest "=It_s_a_factThis_too" "Init: [It_s_a_fact,This_too]",
                  initErrorTest "=+",
                  initErrorTest "=ABC+R",
-                 initErrorTest "=A(BCR)"
+                 initErrorTest "=A(BCR)",
+                 initErrorTest ""
                ],
                testGroup "Initial Facts"
                [
-                 queryTest "?P O N" "Query: [P,O,N]",
-                 queryTest "? P O N" "Query: [P,O,N]",
+                 queryTest "?PON" "Query: [P,O,N]",
+                 queryTest "?   P  O N" "Query: [P,O,N]",
+                 queryTest "?Today_s_the_dayNo_means_no" "Query: [Today_s_the_day,No_means_no]",
                  queryErrorTest "?|",
                  queryErrorTest "?",
                  queryErrorTest "?@",
                  queryErrorTest "? A B C + R",
                  queryErrorTest "? ABC+R",
-                 queryErrorTest "? A B C !R"
+                 queryErrorTest "? A B C !R",
+                 queryErrorTest ""
+                 queryErrorTest "allyourbasearebelongtous"
                ]
              ]
