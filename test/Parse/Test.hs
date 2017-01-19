@@ -11,8 +11,8 @@ import Text.ParserCombinators.ReadP
 exhaustivePattern f str = [x | (x, "") <- readP_to_S f str]
 
 
-parseTest str expect =  (testCase str . assertEqual "" expect . show . head . fst . head . (readP_to_S program)) str
-parseErrorTest str = (testCase str . assertBool "Must fail" . null . (readP_to_S program)) str
+-- parseTest str expect =  (testCase str . assertEqual "" expect . show . head . fst . head . (readP_to_S program)) str
+-- parseErrorTest str = (testCase str . assertBool "Must fail" . null . (readP_to_S program)) str
 
 queryTest str expect = (testCase str . assertEqual "" expect . show . head . (exhaustivePattern queryFacts)) str
 queryErrorTest str = (testCase str . assertBool "Must fail" . null . (exhaustivePattern queryFacts)) str
