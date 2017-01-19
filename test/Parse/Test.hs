@@ -11,8 +11,8 @@ import Text.ParserCombinators.ReadP
 exhaustivePattern f str = [x | (x, "") <- readP_to_S f str]
 
 
--- parseTest str expect =  (testCase str . assertEqual "" expect . show . head . fst . head . (readP_to_S program)) str
--- parseErrorTest str = (testCase str . assertBool "Must fail" . null . (readP_to_S program)) str
+parseTest str expect = (testCase str . assertEqual "" expect . show . parse) str
+parseTestError str = (testCase str . assertBool "Must fail" . isLeft . parse) str
 
 queryTest str expect = (testCase str . assertEqual "" expect . show . head . (exhaustivePattern queryFacts)) str
 queryErrorTest str = (testCase str . assertBool "Must fail" . null . (exhaustivePattern queryFacts)) str
@@ -112,5 +112,12 @@ parseSuite = testGroup "Parsing tests"
                  queryErrorTest "? A B C !R",
                  queryErrorTest "",
                  queryErrorTest "allyourbasearebelongtous"
+               ],
+               testGroup "Parser"
+               [
+                 parseTest "A+B=>C\n=AB\n?C\n" "([((A+C)=>B)],Init: [A,C],Query: [B])",
+                 parseTest "Alchimie+Boisson=>Crampes\n=AlchimieBoisson\n?Crampes\n" "([((Alchimie+Boisson)=>Crampe)],Init: [Alchimie,Boisson],Query: [Crampe])",
+                 parseTest "#tactatctatct\n\n  A+B=>C#youplalala\n=AB#super\n?C#commentaire\n#derniere ligne\n" "([((A+C)=>B)],Init: [A,C],Query: [B])",
+                 parseTest "A+B=>C\nE <=> Q\n=AB\n?C" "([((A+C)=>B),(E<=>Q)],Init: [A,C],Query: [B])"
                ]
              ]
