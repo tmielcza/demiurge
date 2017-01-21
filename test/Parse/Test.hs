@@ -4,14 +4,14 @@ import Test.Framework (testGroup, Test)
 import Test.Framework.Providers.HUnit
 import Test.HUnit hiding (Test)
 import Parse
-import Lexing
 import Data.Either.Unwrap
 import Text.ParserCombinators.ReadP
 
 exhaustivePattern f str = [x | (x, "") <- readP_to_S f str]
 
 
-parseTest str expect = (testCase str . assertEqual "" expect . show . parse) str
+
+parseTest str expect = (testCase str . assertEqual "" expect . show . fromRight . parse) str
 parseTestError str = (testCase str . assertBool "Must fail" . isLeft . parse) str
 
 queryTest str expect = (testCase str . assertEqual "" expect . show . head . (exhaustivePattern queryFacts)) str
@@ -115,9 +115,10 @@ parseSuite = testGroup "Parsing tests"
                ],
                testGroup "Parser"
                [
-                 parseTest "A+B=>C\n=AB\n?C\n" "([((A+C)=>B)],Init: [A,C],Query: [B])",
-                 parseTest "Alchimie+Boisson=>Crampes\n=AlchimieBoisson\n?Crampes\n" "([((Alchimie+Boisson)=>Crampe)],Init: [Alchimie,Boisson],Query: [Crampe])",
-                 parseTest "#tactatctatct\n\n  A+B=>C#youplalala\n=AB#super\n?C#commentaire\n#derniere ligne\n" "([((A+C)=>B)],Init: [A,C],Query: [B])",
-                 parseTest "A+B=>C\nE <=> Q\n=AB\n?C" "([((A+C)=>B),(E<=>Q)],Init: [A,C],Query: [B])"
+                 parseTest "A+B=>C\n=AB\n?C\n" "([((A+B)=>C)],Init: [A,B],Query: [C])",
+                 parseTest "A+B=>C\n=AB\n?C" "([((A+B)=>C)],Init: [A,B],Query: [C])",
+                 parseTest "Asteques+Boisson=>Crocodile\n=AstequesBoisson\n?Crocodile\n" "([((Asteques+Boisson)=>Crocodile)],Init: [Asteques,Boisson],Query: [Crocodile])",
+                 parseTest "#tactatctatct\n\nA+B=>C#youplalala\n=AB#super\n?C#commentaire\n#derniere ligne\n" "([((A+B)=>C)],Init: [A,B],Query: [C])",
+                 parseTest "A+B=>C\nE <=> Q\n=AB\n?C\n" "([((A+B)=>C),(E<=>Q)],Init: [A,B],Query: [C])"
                ]
              ]

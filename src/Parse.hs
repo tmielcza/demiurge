@@ -61,7 +61,7 @@ instance Show Query where
   whitespaces     =   {' ' | '\t'}
 -}
 
-program = do { rules <- relationList; newlineList; facts <- initFacts; newlineList;  query <- queryFacts; newlineList; eof;  return (rules, facts, query) }
+program = do {optional newlineList; rules <- relationList; newlineList; facts <- initFacts; newlineList;  query <- queryFacts; optional newlineList; eof;  return (rules, facts, query) }
 relationList = do { x <- relation `sepBy` newlineList; optional comment; optional newlineList; return x}
 relation = do {x <- expr; op <- relationOp; y <- expr; return (op x y)}
 expr =  orBlock `chainl1` xorOp
