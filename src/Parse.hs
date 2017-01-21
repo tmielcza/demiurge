@@ -32,8 +32,8 @@ instance Show Expr where
     show (Not e) = "!" ++ show e
 
 instance Show Relation where
-    show (Imply e1 e2) = "(" ++ show e1 ++ "=>" ++ show e2 ++ ")"
-    show (Eq e1 e2) = "(" ++ show e1 ++ "<=>" ++ show e2 ++ ")"
+    show (Imply e1 e2) = "{" ++ show e1 ++ "=>" ++ show e2 ++ "}"
+    show (Eq e1 e2) = "{" ++ show e1 ++ "<=>" ++ show e2 ++ "}"
 
 instance Show Init where
     show (Init facts) = "Init: "++ show facts

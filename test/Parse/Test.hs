@@ -76,11 +76,11 @@ parseSuite = testGroup "Parsing tests"
                ],
                testGroup "Relations"
                [
-                 relationTest "A => B" "(A=>B)",
-                 relationTest "A <=> B" "(A<=>B)",
-                 relationTest "A + C <=> B" "((A+C)<=>B)",
-                 relationTest "A ^ C <=> B | D" "((A^C)<=>(B|D))",
-                 relationTest "A + (C | P) <=> B" "((A+(C|P))<=>B)",
+                 relationTest "A => B" "{A=>B}",
+                 relationTest "A <=> B" "{A<=>B}",
+                 relationTest "A + C <=> B" "{(A+C)<=>B}",
+                 relationTest "A ^ C <=> B | D" "{(A^C)<=>(B|D)}",
+                 relationTest "A + (C | P) <=> B" "{(A+(C|P))<=>B}",
                  relationErrorTest "A => + B",
                  relationErrorTest "A + => B",
                  relationErrorTest "A => B => C",
@@ -88,11 +88,9 @@ parseSuite = testGroup "Parsing tests"
                ],
                testGroup "Blanks / Comments"
                [
-                 relationListTest "A => B#CDRR\n  C=>D"  "[(A=>B),(C=>D)]",
-                 relationListTest "A => B#CDRR\n"  "[(A=>B)]",
-                 relationListTest "A => B  #CDRR\n#Comments\n"  "[(A=>B)]",
-                 relationListTest "A => B  \n  E <=> O"  "[(A=>B),(E<=>O)]",
-                 relationListTest "A => B #CDRR" "[(A=>B)]",
+                 relationListTest "A => B#CDRR\n  C=>D"  "[{A=>B},{C=>D}]",
+                 relationListTest "A => B  \n  E <=> O"  "[{A=>B},{E<=>O}]",
+                 relationListTest "A => B" "[{A=>B}]",
                  relationListErrorTest ""
                ],
                testGroup "Queries"
@@ -123,10 +121,11 @@ parseSuite = testGroup "Parsing tests"
                ],
                testGroup "Parser"
                [
-                 parseTest "A+B=>C\n=AB\n?C\n" "([((A+B)=>C)],Init: [A,B],Query: [C])",
-                 parseTest "A+B=>C\n=AB\n?C" "([((A+B)=>C)],Init: [A,B],Query: [C])",
-                 parseTest "Asteques+Boisson=>Crocodile\n=AstequesBoisson\n?Crocodile\n" "([((Asteques+Boisson)=>Crocodile)],Init: [Asteques,Boisson],Query: [Crocodile])",
-                 parseTest "#tactatctatct\n\nA+B=>C#youplalala\n=AB#super\n?C#commentaire\n#derniere ligne\n" "([((A+B)=>C)],Init: [A,B],Query: [C])",
-                 parseTest "A+B=>C\nE <=> Q\n=AB\n?C\n" "([((A+B)=>C),(E<=>Q)],Init: [A,B],Query: [C])"
+                 parseTest "A+B=>C\n=AB\n?C\n" "([{(A+B)=>C}],Init: [A,B],Query: [C])",
+                 parseTest "A+B=>C\n=AB\n?C" "([{(A+B)=>C}],Init: [A,B],Query: [C])",
+                 parseTest "Asteques+Boisson=>Crocodile\n=AstequesBoisson\n?Crocodile\n" "([{(Asteques+Boisson)=>Crocodile}],Init: [Asteques,Boisson],Query: [Crocodile])",
+                 parseTest "#tactatctatct\n\nA+B=>C#youplalala\n=AB#super\n?C#commentaire\n#derniere ligne\n" "([{(A+B)=>C}],Init: [A,B],Query: [C])",
+                 parseTest "A+B=>C\nE <=> Q\n=AB\n?C\n" "([{(A+B)=>C},{E<=>Q}],Init: [A,B],Query: [C])",
+                 parseFileTest "easy" "([{(A+C)=>B}],Init: [A,C],Query: [B])"
                ]
              ]
