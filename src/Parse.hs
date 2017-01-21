@@ -32,8 +32,8 @@ instance Show Expr where
     show (Not e) = "!" ++ show e
 
 instance Show Relation where
-    show (Imply e1 e2) = "(" ++ show e1 ++ "=>" ++ show e2 ++ ")"
-    show (Eq e1 e2) = "(" ++ show e1 ++ "<=>" ++ show e2 ++ ")"
+    show (Imply e1 e2) = "{" ++ show e1 ++ "=>" ++ show e2 ++ "}"
+    show (Eq e1 e2) = "{" ++ show e1 ++ "<=>" ++ show e2 ++ "}"
 
 instance Show Init where
     show (Init facts) = "Init: "++ show facts
@@ -43,7 +43,7 @@ instance Show Query where
 
 {-
   program         =   whitespaces, newlines, [relations, newlines, initFacts, newlines, query, [newlines]] EOF
-  relations       =   relation, {newlines, relation}
+  relations       =   relation, {newlines, relation}, [comment]
   relation        =   expr, ("=>" | "<=>"), expr
   initFacts       =   '=', {whitespaces, binaryFact}
   queries         =   '?', whitespaces, fact, {whitespaces, fact}
@@ -61,8 +61,8 @@ instance Show Query where
   whitespaces     =   {' ' | '\t'}
 -}
 
-program = do {optional newlineList; rules <- relationList; newlineList; facts <- initFacts; newlineList;  query <- queryFacts; optional newlineList; eof;  return (rules, facts, query) }
-relationList = do { x <- relation `sepBy` newlineList; optional comment; optional newlineList; return x}
+program = do {optional newlineList; rules <- relationList; newlineList; facts <- initFacts; newlineList;  query <- queryFacts; optional comment; optional newlineList; eof;  return (rules, facts, query) }
+relationList = do { x <- relation `sepBy1` newlineList; return x}
 relation = do {x <- expr; op <- relationOp; y <- expr; return (op x y)}
 expr =  orBlock `chainl1` xorOp
 orBlock = andBlock `chainl1` orOp
