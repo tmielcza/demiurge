@@ -9,16 +9,15 @@ import Text.ParserCombinators.ReadP
 
 exhaustivePattern f str = [x | (x, "") <- readP_to_S f str]
 
-{-parseTest file expect=
-     let  parseFile =  do
-              content <- readFile ("samples/" ++ file)
-              return ((fromRight . parse) content)
-          in
-            (testCase file . assertEqual "" expect) parseFile-}
+parseFileTest file expect=
+     let fileAssertion = do
+          content <- readFile ("samples/" ++ file)
+          assertEqual "" expect ((show . fromRight . parse) content)
+     in testCase file fileAssertion
 --          Right ([((A+C)=>B)],Init: [A,C],Query: [B])
 
-assertEqualIo ioresult string=
-     testCase "" (assertEqual ioresult IO(string))
+
+
 
 parseTest str expect = (testCase str . assertEqual "" expect . show . fromRight . parse) str
 parseTestError str = (testCase str . assertBool "Must fail" . isLeft . parse) str
