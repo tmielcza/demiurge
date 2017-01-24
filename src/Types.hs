@@ -1,3 +1,11 @@
+-----------------------------------------------------------------------------
+-- |
+-- Module      :  Types
+-- author      : cdannapp & tmielcza
+--
+-- Types returned by parsing and used for Resolution
+--
+-----------------------------------------------------------------------------
 module Types
 (
   Expr(Xor, Or, And, Fact, Not),
@@ -6,17 +14,20 @@ module Types
   Query(Query)
     ) where
 
-
+-- | the type of expressions all constructors are recursives except Fact
 data Expr = Xor Expr Expr |
             Or Expr Expr |
             And Expr Expr |
             Fact String |
             Not Expr
 
+-- | The type of the relations between the Exprs. They form rules.
 data Relation = Eq Expr Expr | Imply Expr Expr
 
-newtype Init = Init [Expr] -- ce sont des expressions pas des strings qui seront renvoyés et un init peut etre a not
+-- | this type contains an Expr array. They are init Fact obtained by parsing.
+newtype Init = Init [Expr]
 
+-- | this type contains an Expr array. They are queries obtained by parsing.
 newtype Query = Query [Expr]
 
 instance Show Expr where
