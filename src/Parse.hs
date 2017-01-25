@@ -5,7 +5,11 @@ module Parse
   relationList,
   initFacts,
   queryFacts,
-  expr
+  expr,
+  Expr(..),
+  Relation(Eq, Imply),
+  Init(Init),
+  Query
     ) where
 
 import Text.ParserCombinators.ReadP
@@ -17,6 +21,7 @@ data Expr = Xor Expr Expr |
             And Expr Expr |
             Fact String |
             Not Expr
+          deriving Eq
 
 data Relation = Eq Expr Expr | Imply Expr Expr
 
