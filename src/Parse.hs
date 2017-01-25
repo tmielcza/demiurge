@@ -33,7 +33,11 @@ module Parse
   relationList,
   initFacts,
   queryFacts,
-  expr
+  expr,
+  Expr(..),
+  Relation(Eq, Imply),
+  Init(Init),
+  Query
     ) where
 
 
@@ -42,6 +46,7 @@ import Text.ParserCombinators.ReadP
 import Data.Char(isLower, isUpper)
 import Control.Monad
 
+<<<<<<< HEAD
 -- | Parser of the entire File, in case of success it forms a tuple containing
 -- a list of rules, a list of init exprs, and a list of requested facts
 program :: ReadP ([Relation], Init, Query)
