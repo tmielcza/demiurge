@@ -50,6 +50,10 @@ exprMap (And lhs rhs) func = And (func lhs) (func rhs)
 exprMap (Not e) func = Not (func e)
 
 
+-- Prend une expression, l'evalue a l'aide des regles et des connaissances,
+-- et renvoie les connaissances acquises, ainsi que l'etat de l'expression
+eval :: Expr -> [(Expr, State)] -> [Relation] -> ([(Expr, State)], State)
+
 
  -- | Loops on the rules to find the ones that concern our goal
 -- loopOnRule goal = filter (\(Imply _ rhs) -> rhs == goal )
