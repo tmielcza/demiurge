@@ -5,6 +5,7 @@
 --
 -- Function used for parsing. Use the ReadP Monad.
 --
+-- @
 -- Here is our grammar in the Extended Backus-Naur Form (EBNF):
 --  program         =   whitespaces, newlines, [relations, newlines, initFacts, newlines, query, [newlines]] EOF
 --  relations       =   relation, {newlines, relation}, [comment]
@@ -23,6 +24,7 @@
 --  endOfLine       =   [comment], '\n'
 --  comment         =   whitespaces, '#', {anyCharExceptNewline}
 --  whitespaces     =   {' ' | '\t'}
+-- @
 -----------------------------------------------------------------------------
 module Parse
 ( parse,
