@@ -4,8 +4,35 @@ module BackwardChaining
   ) where
 
 import Parse
+import Prelude hiding  (True, False, (+), (||), not, (^))
+import Types
 
-type State = Maybe Bool
+data State = True | False | Unknown deriving (Show, Eq)
+class (Eq t) => Trilean t where
+  true, false, unknown :: t
+  not :: t -> t
+  (+), (||), (^) :: t -> t -> t
+  a + b
+    | a == false = false
+    | b == false = false
+    | a == true && b == true = true
+    | otherwise = unknown
+  a || b
+    | a == true = true
+    | b == true = true
+    | a == false && b == false = false
+    | otherwise = unknown
+  not a
+    | a == true = false
+    | a == false = true
+    | otherwise = unknown
+  a ^ b = (a || b) + not (a + b)
+
+
+instance Trilean State where
+    true = True
+    false = False
+    unknown = Unknown
 
 bc :: ([Relation], Init, Query) -> [Expr]
 bc (relations, init, query) = []
