@@ -34,9 +34,6 @@ instance Trilean State where
     false = False
     unknown = Unknown
 
-bc :: ([Relation], Init, Query) -> [Expr]
-bc (relations, init, query) = []
-
 isFlagged :: [(Expr, State)] -> Expr -> Bool
 isFlagged ((f, _):xs) expect
   | f == expect = True
@@ -81,6 +78,14 @@ exprMap (Not e) func = Not (func e)
 -- et renvoie les connaissances acquises, ainsi que l'etat de l'expression
 eval :: Expr -> [(Expr, State)] -> [Relation] -> ([(Expr, State)], State)
 
+-- launch the eval function with the init fact as knowledges and the first query as goal
+bc :: ([Relation], Init, Query) -> [Expr]
+bc (relations, Init i, Query (q:qs)) =
+  let translateToState Fact x = (x, True)
+      translateToState Not (Fact x) = (x, False)
+      knowledge = map translateToState i
+      e = eval q knowledge relations
+  in []
 
  -- | Loops on the rules to find the ones that concern our goal
 -- loopOnRule goal = filter (\(Imply _ rhs) -> rhs == goal )
