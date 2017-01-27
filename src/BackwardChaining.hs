@@ -4,13 +4,13 @@ module BackwardChaining
   ) where
 
 import Parse
-import Prelude hiding  (True, False, (+), (||), not, (^))
+import Prelude hiding  (True, False, (+), (||), (^))
 import Types
 
 data State = True | False | Unknown deriving (Show, Eq)
 class (Eq t) => Trilean t where
   true, false, unknown :: t
-  not :: t -> t
+  t_not :: t -> t
   (+), (||), (^) :: t -> t -> t
   a + b
     | a == false = false
@@ -22,11 +22,11 @@ class (Eq t) => Trilean t where
     | b == true = true
     | a == false && b == false = false
     | otherwise = unknown
-  not a
+  t_not a
     | a == true = false
     | a == false = true
     | otherwise = unknown
-  a ^ b = (a || b) + not (a + b)
+  a ^ b = (a || b) + t_not (a + b)
 
 
 instance Trilean State where
