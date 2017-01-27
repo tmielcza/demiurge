@@ -101,13 +101,23 @@ eval goal knowledge rules =
   in ([], Unknown)
 
 -- launch the eval function with the init fact as knowledges and the first query as goal
-bc :: ([Relation], Init, Query) -> [Expr]
-bc (relations, Init i, Query (q:qs)) =
+launchBc :: ([Relation], Init, Query) -> [Expr]
+launchBc (relations, Init i, Query qs) =
   let translateToState Fact x = (x, True)
       translateToState Not (Fact x) = (x, False)
       knowledge = map translateToState i
-      e = eval q knowledge relations
-  in []
+  in resolveOnQuery relations knowledge qs
+
+
+--| loop on query to search it, it returns the pair with the goal at the head
+--  of the list of the resolution of next queries
+resolveOnQuery :: [Relation] -> [(Expr, State)] -> [Expr] -> [(Expr, State)]
+resolveOnQuery rules knowledges (q:qs) =
+  let (new_k, goal_state) = eval q knowledge relations
+  in (q:goal_state):(resolveOnQuery rules (knowledge ++ new_k) qs)
+
+resolveOnQuery rules knowledges [] = []
+
 
  -- | Loops on the rules to find the ones that concern our goal
 -- getRelatedRules goal = filter (\(Imply _ rhs) -> rhs == goal )
