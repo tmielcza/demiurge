@@ -73,6 +73,23 @@ exprMap (Or lhs rhs) func = Or (func lhs) (func rhs)
 exprMap (And lhs rhs) func = And (func lhs) (func rhs)
 exprMap (Not e) func = Not (func e)
 
+exprMap1 :: Expr -> (Expr -> [a]) -> [a]
+exprMap1 (And lhs rhs) func = (func lhs) ++ (func rhs)
+exprMap1 (Or lhs rhs) func = (func lhs) ++ (func rhs)
+exprMap1 (Xor lhs rhs) func = (func lhs) ++ (func rhs)
+exprMap1 Not e = [func e]
+exprMap1 e@(Fact _) func = [func e]
+
+getFactsInExpr e = exprMap1 e (/x -> x)
+
+-- Check if some of the facts in the expr are known and return them
+flaggedFacts :: Expr -> [(Expr, State)] -> [(Expr, State)]
+exprFactsFlagged e flagged =
+flaggedFacts :: Expr -> [(Expr, State)] -> [(Expr, State)]
+flaggedFacts e flagged =
+  let es = getFactsInExpr e
+      searchFact tab (x, _) = isJust (elem x tab)
+  in filter (searchFact es) flagged
 
 -- Prend une expression, l'evalue a l'aide des regles et des connaissances,
 -- et renvoie les connaissances acquises, ainsi que l'etat de l'expression
