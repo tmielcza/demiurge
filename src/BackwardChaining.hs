@@ -96,7 +96,7 @@ flaggedFacts e flagged =
 -- sends back new knowleges and the state of the goal
 eval :: Expr -> [(Expr, State)] -> [Relation] -> ([(Expr, State)], State)
 eval goal knowledge rules =
-  let Relation left right = getConcernedRules goal rules
+  let Relation left right = getRelatedRules goal rules
       areKnown ==  exprFactsFlagged left knowledge
   in ([], Unknown)
 
@@ -110,9 +110,9 @@ bc (relations, Init i, Query (q:qs)) =
   in []
 
  -- | Loops on the rules to find the ones that concern our goal
--- loopOnRule goal = filter (\(Imply _ rhs) -> rhs == goal )
-
-loopOnRule goal = filter cmp where
+-- getRelatedRules goal = filter (\(Imply _ rhs) -> rhs == goal )
+getRelatedRules :: Expr  -> [Relation] -> [Relation]
+getRelatedRules goal = filter cmp where
   cmp (Imply _ rhs) = rhs == goal
 
 
