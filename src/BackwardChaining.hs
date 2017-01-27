@@ -91,9 +91,14 @@ flaggedFacts e flagged =
       searchFact tab (x, _) = isJust (elem x tab)
   in filter (searchFact es) flagged
 
--- Prend une expression, l'evalue a l'aide des regles et des connaissances,
--- et renvoie les connaissances acquises, ainsi que l'etat de l'expression
+
+-- Takes an Expr as the goal to compute with the rules and knowledge we have
+-- sends back new knowleges and the state of the goal
 eval :: Expr -> [(Expr, State)] -> [Relation] -> ([(Expr, State)], State)
+eval goal knowledge rules =
+  let Relation left right = getConcernedRules goal rules
+      areKnown ==  exprFactsFlagged left knowledge
+  in ([], Unknown)
 
 -- launch the eval function with the init fact as knowledges and the first query as goal
 bc :: ([Relation], Init, Query) -> [Expr]
