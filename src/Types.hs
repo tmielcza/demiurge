@@ -11,8 +11,14 @@ module Types
   Expr(Xor, Or, And, Fact, Not),
   Relation(Eq, Imply),
   Init(Init),
-  Query(Query)
+  Query(Query),
+  State(..),
+  Trilean(..),
+  FactState
     ) where
+
+import Prelude hiding  (True, False, (+), (||), (^))
+
 
 -- | the type of expressions all constructors are recursives except Fact
 data Expr = Xor Expr Expr |
@@ -20,6 +26,7 @@ data Expr = Xor Expr Expr |
             And Expr Expr |
             Fact String |
             Not Expr
+            deriving (Eq)
 
 -- | The type of the relations between the Exprs. They form rules.
 data Relation = Eq Expr Expr | Imply Expr Expr
@@ -46,3 +53,33 @@ instance Show Init where
 
 instance Show Query where
     show (Query facts) = "Query: "++ show facts
+
+data State = True | False | Unknown deriving (Show, Eq)
+class (Eq t) => Trilean t where
+  true, false, unknown :: t
+  t_not :: t -> t
+  (@+), (@|), (@^) :: t -> t -> t
+  a @+ b
+    | a == false = false
+    | b == false = false
+    | a == true && b == true = true
+    | otherwise = unknown
+  a @| b
+    | a == true = true
+    | b == true = true
+    | a == false && b == false = false
+    | otherwise = unknown
+  t_not a
+    | a == true = false
+    | a == false = true
+    | otherwise = unknown
+  a @^ b = (a @| b) @+ t_not (a @+ b)
+
+
+instance Trilean State where
+    true = True
+    false = False
+    unknown = Unknown
+
+
+type FactState = (Expr, State)
