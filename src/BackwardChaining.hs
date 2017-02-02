@@ -48,3 +48,18 @@ searchFact goal knowledge rules =
     otherwise -> ((goal, goalState):newknown, goalState)
 
 --searchEquivalentRule :: [Relation] -> [Relation]
+
+launchResolution :: ([Relation], Init, Query) -> IO ()
+launchResolution (rules, Init init, Query query) =
+  let translateToState (Not fact) = (fact, Types.False)
+      translateToState fact = (fact, Types.True)
+      knowledge = map translateToState init
+  in  loopOnQuery rules query knowledge
+
+loopOnQuery :: [Relation] -> [Expr] -> [FactState] -> IO ()
+loopOnQuery rules (q:qs) knowledge = do
+  let  (newknowledge, result) = resolveFact q knowledge rules
+  print (" " ++ (show q) ++ ":" ++ (show result))
+  loopOnQuery rules qs (knowledge ++ newknowledge)
+
+loopOnQuery _ [] _ = return ()
