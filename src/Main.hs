@@ -1,4 +1,5 @@
 import Parse(parse)
+import BackwardChaining(launchResolution)
 import System.Environment
 
 parseFile file = do
@@ -8,10 +9,11 @@ parseFile file = do
         return tupleLines
 
 
+
 main = do
   args <- getArgs
   if (length args) == 0
     then
       print "ExpertSystem needs an argument"
     else
-     parseFile (args !! 0) >>= print
+     parseFile (args !! 0) >>= launchResolution
