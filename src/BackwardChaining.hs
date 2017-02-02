@@ -1,10 +1,16 @@
 import Types
 
--- | a faire une loop qui verifie que le resultqt precedent est egal a notre resultat ou a unknown
+-- | loop that check the coherence of results
 resolveRules :: [Relation] -> [Relation] -> [FactState] -> ([FactState], State)
 resolveRules  (rule:concernedRules) rules knowledge =
   let Imply lhs _ = rule
-  in eval knowledge rules lhs
+      (newknown, ret) = eval knowledge rules lhs
+      (nextKnown, nextRet) = resolveRules concernedRules rules knowledge
+  in case ret of
+    Unknown -> (newknown ++ nextKnown, nextRet)
+    nextRet -> (newknown ++ nextKnown, ret)
+    otherwise -> Unknown
+
 
 resolveRules [] _ _ = ([], Types.False)
 
