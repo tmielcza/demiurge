@@ -4,9 +4,7 @@ import System.Environment
 
 parseFile file = do
   content <- readFile ("samples/" ++ file)
-  let tupleLines = parse content
-      in
-        return tupleLines
+  return (parse content)
 
 
 
@@ -15,5 +13,8 @@ main = do
   if (length args) == 0
     then
       print "ExpertSystem needs an argument"
-    else
-     parseFile (args !! 0) >>= launchResolution
+    else do
+     parsed <- parseFile (args !! 0)
+     case parsed of
+       Right triple -> print (launchResolution triple)
+       Left error -> print error
