@@ -14,7 +14,8 @@ module Types
   Query(Query),
   State(..),
   Trilean(..),
-  FactState
+  FactState,
+  rhs, lhs,
     ) where
 
 import Prelude hiding  (True, False, (+), (||), (^))
@@ -37,6 +38,10 @@ newtype Init = Init [Expr]
 -- | this type contains an Expr array. They are queries obtained by parsing.
 newtype Query = Query [Expr]
 
+data State = True | False | Unknown deriving (Show, Eq)
+
+type FactState = (Expr, State)
+
 instance Show Expr where
     show (Xor e1 e2) = "(" ++ show e1 ++ "^" ++ show e2 ++ ")"
     show (Or e1 e2) = "(" ++ show e1 ++ "|" ++ show e2 ++ ")"
@@ -54,7 +59,12 @@ instance Show Init where
 instance Show Query where
     show (Query facts) = "Query: "++ show facts
 
-data State = True | False | Unknown deriving (Show, Eq)
+rhs (Eq _ r) = r
+rhs (Imply _ r) = r
+
+lhs (Eq l _) = l
+lhs (Imply l _) = l
+
 class (Eq t) => Trilean t where
   true, false, unknown :: t
   t_not :: t -> t
@@ -80,6 +90,3 @@ instance Trilean State where
     true = True
     false = False
     unknown = Unknown
-
-
-type FactState = (Expr, State)
