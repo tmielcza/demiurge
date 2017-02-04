@@ -28,6 +28,11 @@ data Expr = Xor Expr Expr |
             Fact String |
             Not Expr
             deriving (Eq)
+infixl 4 `Xor`
+infixl 5 `Or`
+infixl 6 `And`
+infixl 7 `Imply`
+infixl 8 `Eq`
 
 -- | The type of the relations between the Exprs. They form rules.
 data Relation = Eq Expr Expr | Imply Expr Expr
