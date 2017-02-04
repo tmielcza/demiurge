@@ -4,6 +4,7 @@ module BackwardChaining
     ) where
 
 import Types
+import Inference
 
 -- | loop that check the coherence of results
 resolveRules :: [Relation] -> [Relation] -> [FactState] ->  Maybe([FactState], State)
@@ -26,6 +27,7 @@ resolveFact subgoal knowledge rules =
     Just st -> Just ([], st)
     Nothing  -> searchFact subgoal knowledge rules
 
+-- | the function that evaluate an Expression
 eval :: [FactState] -> [Relation] -> Expr -> Maybe ([FactState], State)
 eval knowledge rulesList expr =
   let shortEval = (eval knowledge rulesList) -- eval shortened
@@ -47,7 +49,7 @@ eval knowledge rulesList expr =
 searchFact :: Expr -> [FactState] -> [Relation] -> Maybe ([FactState], State)
 searchFact goal knowledge rules =
   let
-    concernedRules = filter (\r -> (rhs r == goal) || (rhs r == Not(goal))) rules
+    concernedRules = inferRules rules goal
     searchKnown = (goal, Unknown):knowledge -- We set our goal at Unknown to avoid looping on it
     result = resolveRules concernedRules rules searchKnown
   in case result of
@@ -55,8 +57,7 @@ searchFact goal knowledge rules =
     Just (newknown, Unknown) -> Just ((goal, Types.False):newknown, Types.False)
     Just (newknown, goalState) -> Just ((goal, goalState):newknown, goalState)
 
---searchEquivalentRule :: [Relation] -> [Relation]
-
+-- | function called withe the result of file parsing to start resolution
 launchResolution :: ([Relation], Init, Query) -> Maybe [FactState]
 launchResolution (rules, Init init, Query query) =
   let translateToState (Not fact) = (fact, Types.False)
@@ -64,6 +65,7 @@ launchResolution (rules, Init init, Query query) =
       knowledge = map translateToState init
   in  loopOnQuery rules query knowledge
 
+-- | loop the resolution on each query sent
 loopOnQuery :: [Relation] -> [Expr] -> [FactState] -> Maybe [FactState]
 loopOnQuery rules (q:qs) knowledge = do
   let  ret = resolveFact q knowledge rules
