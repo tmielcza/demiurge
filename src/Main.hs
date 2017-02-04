@@ -2,8 +2,8 @@ import Parse(parse)
 import BackwardChaining(launchResolution)
 import System.Environment
 
-parseFile file = do
-  content <- readFile ("samples/" ++ file)
+parseFile path = do
+  content <- readFile (path)
   return (parse content)
 
 
