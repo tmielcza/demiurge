@@ -9,8 +9,11 @@ import Inference
 -- | loop that check the coherence of results
 resolveRules :: [Relation] -> [Relation] -> [FactState] ->  Maybe([FactState], State)
 resolveRules  concernedRules rules knowledge =
-  (foldl combinePair (Just ([], Unknown)) . map ((eval knowledge rules) . lhs) ) concernedRules
+  (foldl combinePair (Just ([], Unknown)) . map evalGoal) concernedRules
   where
+    evalGoal (lhs `Imply` (Not _)) = (t_not `mapSnd`) <$> (eval knowledge rules lhs)
+    evalGoal (lhs `Imply` _) = eval knowledge rules lhs
+    evalGoal _ = error "Unreachable code"
     combinePair p1 p2 = do
       (k1, s1) <- p1
       (k2, s2) <- p2

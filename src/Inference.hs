@@ -16,7 +16,7 @@ infer (premices `Imply` (lhs `Or` rhs)) goal =
   infer ((premices `And` Not rhs) `Imply` lhs) goal
 
 infer (premices `Imply` (lhs `Xor` rhs)) goal =
- infer (premices `Imply` ((lhs `Or` rhs) `Or` Not (lhs `And` rhs))) goal
+ infer (premices `Imply` ((lhs `Or` rhs) `And` Not (lhs `And` rhs))) goal
 
 
 -- inference of not rules
@@ -35,7 +35,7 @@ infer (premices `Imply` Not (lhs `Xor` rhs)) goal =
 -- return the rule sent if the rhs is the fact we are looking for
 infer r@(_ `Imply` fact) goal
   | goal == fact = [r]
-  | goal == Not fact = [r]
+  | Not goal == fact = [r]
   | otherwise    = []
 
 {-

@@ -16,6 +16,7 @@ module Types
   Trilean(..),
   FactState,
   rhs, lhs,
+  mapSnd,
     ) where
 
 import Prelude hiding  (True, False, (+), (||), (^))
@@ -90,6 +91,8 @@ class (Eq t) => Trilean t where
     | otherwise = unknown
   a @^ b = (a @| b) @+ t_not (a @+ b)
 
+mapSnd :: (b -> c) -> (a, b) -> (a, c)
+mapSnd f (a, b) = (a, f b)
 
 instance Trilean State where
     true = True
