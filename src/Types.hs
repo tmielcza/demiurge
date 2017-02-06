@@ -19,7 +19,6 @@ module Types
   mapSnd,
     ) where
 
-import Prelude hiding  (True, False, (+), (||), (^))
 
 
 -- | the type of expressions all constructors are recursives except Fact
@@ -44,7 +43,7 @@ newtype Init = Init [Expr]
 -- | this type contains an Expr array. They are queries obtained by parsing.
 newtype Query = Query [Expr]
 
-data State = True | False | Unknown deriving (Show, Eq)
+data State = Unknown Bool | Known Bool | Ambiguous | Invalid deriving (Show, Eq)
 
 type FactState = (Expr, State)
 
@@ -72,29 +71,40 @@ lhs (Eq l _) = l
 lhs (Imply l _) = l
 
 class (Eq t) => Trilean t where
-  true, false, unknown :: t
+  true, false, ambiguous :: t --invalid est retourné mais jamais reçu puisqu'il est immediatement transformé en Left
+  unknown, notunknown :: t
   t_not :: t -> t
-  (@+), (@|), (@^) :: t -> t -> t
+  (@+), (@|), (@^) :: t -> t -> t -- return true false unknown notunknown
   a @+ b
     | a == false = false
     | b == false = false
     | a == true && b == true = true
+    | a == ambiguous || b == ambiguous = ambiguous
+    | (a == unknown && b == notunknown) || (b == unknown && a == notunknown) = unknown
     | otherwise = unknown
   a @| b
     | a == true = true
     | b == true = true
     | a == false && b == false = false
+    | a == ambiguous || b == ambiguous = ambiguous
+    | (a == unknown && b == notunknown) || (b == unknown && a == notunknown) = unknown
     | otherwise = unknown
   t_not a
     | a == true = false
     | a == false = true
-    | otherwise = unknown
+    | a == unknown = notunknown
+    | a == notunknown = unknown
+    | otherwise = a
   a @^ b = (a @| b) @+ t_not (a @+ b)
+
+instance Trilean State where
+    true = Known True
+    false = Known False
+    unknown = Unknown True
+    notunknown = Unknown False
+    ambiguous = Ambiguous
 
 mapSnd :: (b -> c) -> (a, b) -> (a, c)
 mapSnd f (a, b) = (a, f b)
 
-instance Trilean State where
-    true = True
-    false = False
-    unknown = Unknown
+

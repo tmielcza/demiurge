@@ -9,7 +9,7 @@ import Inference
 -- | loop that check the coherence of results
 resolveRules :: [Relation] -> [Relation] -> [FactState] ->  Maybe([FactState], State)
 resolveRules  concernedRules rules knowledge =
-  (foldl combinePair (Just ([], Unknown)) . map evalGoal) concernedRules
+  (foldl combinePair (Right ([], (Unknown True))) . map (isAmbiguous . evalGoal)) concernedRules
   where
     evalGoal (lhs `Imply` (Not _)) = (t_not `mapSnd`) <$> (eval knowledge rules lhs)
     evalGoal (lhs `Imply` _) = eval knowledge rules lhs
@@ -18,10 +18,14 @@ resolveRules  concernedRules rules knowledge =
       (k1, s1) <- p1
       (k2, s2) <- p2
       fmap ((,) $ k1 ++ k2) $ combineStates s1 s2
-    combineStates Unknown s2 = Just s2
-    combineStates s1 Unknown = Just s1
-    combineStates s1 s2 | s1 == s2 = Just s1
-                        | otherwise = Nothing
+    combineStates (Unknown True) s2 = Right s2
+    combineStates s1 (Unknown True) = Right s1
+    combineStates Ambiguous s2 = Right s2
+    combineStates s1 Ambiguous = Right s1
+    combineStates s1 s2 | s1 == s2 = Right s1
+                        | otherwise = Left ("Incoherent rules and/or initial facts")
+    isAmbiguous (Right (_, Unknown False)) = Ambiguous -- return true, false, unknown, ambiguous
+    isAmbiguous st = st
 
 -- | Look for q fact in the knowledge or search it with the rules
 resolveFact :: Expr -> [FactState] -> [Relation] -> Maybe([FactState], State)
@@ -56,15 +60,15 @@ searchFact goal knowledge rules =
     searchKnown = (goal, Unknown):knowledge -- We set our goal at Unknown to avoid looping on it
     result = resolveRules concernedRules rules searchKnown
   in case result of
-    Nothing -> Nothing
-    Just (newknown, Unknown) -> Just ((goal, Types.False):newknown, Types.False)
-    Just (newknown, goalState) -> Just ((goal, goalState):newknown, goalState)
+    Left err -> Left err
+    Right (newknown, Unknown) -> Right ((goal, Known False):newknown, Known False)
+    Right (newknown, goalState) -> Right ((goal, goalState):newknown, goalState)
 
 -- | function called withe the result of file parsing to start resolution
 launchResolution :: ([Relation], Init, Query) -> Maybe [FactState]
 launchResolution (rules, Init init, Query query) =
-  let translateToState (Not fact) = (fact, Types.False)
-      translateToState fact = (fact, Types.True)
+  let translateToState (Not fact) = (fact, Known False)
+      translateToState fact = (fact, Known True)
       knowledge = map translateToState init
   in  loopOnQuery rules query knowledge
 
