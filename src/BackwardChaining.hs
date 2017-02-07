@@ -5,14 +5,13 @@ module BackwardChaining
 
 import Types
 import Inference
+import Prelude hiding (True, False, not)
 
 combineStates :: State -> State -> Either String State
-combineStates (NotUnknown _) s2 = Right s2
-combineStates s1 (NotUnknown _) = Right s1
-combineStates (Unknown _) s2 = Right s2
-combineStates s1 (Unknown _) = Right s1
-combineStates Ambiguous s2 = Right s2
-combineStates s1 Ambiguous = Right s1
+combineStates (Unsolved _) s2 = Right s2
+combineStates s1 (Unsolved _) = Right s1
+combineStates Unprovable s2 = Right s2
+combineStates s1 Unprovable = Right s1
 combineStates s1 s2
     | s1 == s2 = Right s1
     | otherwise = Left ("Incoherent rules and/or initial facts")
@@ -31,7 +30,7 @@ resolveRules  concernedRules rules knowledge =
     evalGoal (lhs `Imply` rhs) = ((specialCase rhs) `mapSnd`) <$> (eval knowledge rules lhs)
     evalGoal _ = error "Unreachable code"
   in
-  (foldl combinePair (Right ([], (Unknown (Fact "")))) . map (evalGoal)) concernedRules
+  (foldl1 combinePair . map (evalGoal)) concernedRules
 
 
 -- ATTENTION C DU LOURDS
@@ -47,13 +46,13 @@ resolveRules  concernedRules rules knowledge =
 
 
 specialCase :: Expr -> State -> State
-specialCase (Not rhs)  (Unknown expr)
-  | expr == rhs =  (Known False) -- a => !a
-  | otherwise =  Unknown expr
-specialCase rhs  (NotUnknown expr)
-  | expr == rhs =  (Known True) -- !a => a
-  | otherwise =  Ambiguous -- !b => a
-specialCase (Not rhs) (Known True) = (Known False)
+specialCase (Not rhs)  (Unsolved expr)
+  | expr == rhs =  (False) -- a => !a
+  | otherwise =  Unsolved expr
+specialCase rhs  (Unsolved expr)
+  | expr == rhs =  (True) -- !a => a
+  | otherwise =  Unprovable -- !b => a
+specialCase (Not rhs) (True) = (False)
 specialCase rhs state = state
 
 -- | Look for q fact in the knowledge or search it with the rules
@@ -72,7 +71,7 @@ eval knowledge rulesList expr =
           (k1, st1) <- p1
           (k2, st2) <- p2
           return ((k1 ++ k2), (st1 `ope` st2)) -- gather the pair concatening the left list and applying the ope on the right States
-      applyNot p1 = do { (k, st) <- p1; return (k, (t_not st)) }
+      applyNot p1 = do { (k, st) <- p1; return (k, (not st)) }
   in case expr of
       fact@(Fact _) -> (resolveFact fact knowledge rulesList)
       Not e -> applyNot (shortEval e)
@@ -86,18 +85,18 @@ searchFact :: Expr -> [FactState] -> [Relation] -> Either String ([FactState], S
 searchFact goal knowledge rules =
   let
     concernedRules = inferRules rules goal
-    searchKnown = (goal, Unknown goal):knowledge -- We set our goal at Unknown to avoid looping on it
+    searchKnown = (goal, Unsolved goal):knowledge -- We set our goal at Unsolved to avoid looping on it
     result = resolveRules concernedRules rules searchKnown
   in case result of
     Left err -> Left err
-    Right (newknown, Unknown _) -> Right ((goal, Known False):newknown, Known False)
+    Right (newknown, Unsolved _) -> Right ((goal, False):newknown, False)
     Right (newknown, goalState) -> Right ((goal, goalState):newknown, goalState)
 
 -- | function called with the result of file parsing to start resolution
 launchResolution :: ([Relation], Init, Query) -> Either String [FactState]
 launchResolution (rules, Init init, Query query) =
-  let translateToState (Not fact) = (fact, Known False)
-      translateToState fact = (fact, Known True)
+  let translateToState (Not fact) = (fact, False)
+      translateToState fact = (fact, True)
       knowledge = map translateToState init
   in  loopOnQuery rules query knowledge
 

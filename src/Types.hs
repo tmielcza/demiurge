@@ -13,13 +13,13 @@ module Types
   Init(Init),
   Query(Query),
   State(..),
-  t_not, (@+), (@|), (@^),
+  not, (@+), (@|), (@^),
   FactState,
   rhs, lhs,
   mapSnd,
     ) where
 
-
+import Prelude hiding (True, False, not)
 
 -- | the type of expressions all constructors are recursives except Fact
 data Expr = Xor Expr Expr |
@@ -44,16 +44,11 @@ newtype Init = Init [Expr]
 newtype Query = Query [Expr]
 
 -- | Used to browse and find he state of a fact, Unknown is manda
-data State = Unknown Expr| NotUnknown Expr| Known Bool | Ambiguous deriving (Show)
+data State = Unsolved Expr | True | False | Unprovable
+  deriving (Show, Eq)
 
 type FactState = (Expr, State)
 
-instance Eq State where
-  (Unknown _) == (Unknown _) = True
-  (NotUnknown _) == (NotUnknown _) = True
-  (Known k1) == (Known k2) = k1 == k2
-  Ambiguous == Ambiguous = True
-  _ == _ = False
 
 instance Show Expr where
     show (Xor e1 e2) = "(" ++ show e1 ++ "^" ++ show e2 ++ ")"
@@ -78,47 +73,52 @@ rhs (Imply _ r) = r
 lhs (Eq l _) = l
 lhs (Imply l _) = l
 
-{-class (Eq t) => Trilean t where
-  true, false, ambiguous :: t --invalid est retourné mais jamais reçu puisqu'il est immediatement transformé en Left
-  unknown, Notunknown :: t
-  areSameExpr :: t -> t -> Bool
-  t_not :: t -> t
-  (@+), (@|), (@^) :: t -> t -> t -- return true false unknown Notunknown-}
+
 
 (@+) :: State -> State -> State
 
-a @+ b
-  | a == (Known False) = (Known False)
-  | b == (Known False) = (Known False)
-  | a == (Known True) && b == (Known True) = (Known True)
-  | a == Ambiguous || b == Ambiguous = Ambiguous
-  | ((a == Unknown (Fact "") && b == NotUnknown (Fact "")) || (b == Unknown (Fact "") && a == NotUnknown (Fact ""))) && areSameExpr a b = (Known False)
-  | (a == Unknown (Fact "") && b == NotUnknown (Fact "")) || (b == Unknown (Fact "") && a == NotUnknown (Fact "")) = Unknown (Fact "")
-  | otherwise = Unknown (Fact "")
+False @+ _ = False
+_ @+ False = False
+True @+ b = b
+a @+ True = a
+Unprovable @+ _ = Unprovable
+_ @+ Unprovable = Unprovable
+Unsolved a @+ Unsolved b
+  | a == Not b = False
+  | Not a == b = False
+  | a == b = Unsolved a
+  | otherwise = Unsolved (a `And` b)
+
+
 
 (@|) :: State -> State -> State
-a @| b
-  | a == (Known True) = (Known True)
-  | b == (Known True) = (Known True)
-  | a == (Known False) && b == (Known False) = (Known False)
-  | a == Ambiguous || b == Ambiguous = Ambiguous
-  | ((a == Unknown (Fact "") && b == NotUnknown (Fact "")) || (b == Unknown (Fact "") && a == NotUnknown (Fact ""))) && areSameExpr a b = (Known True)
-  | (a == Unknown (Fact "") && b == NotUnknown (Fact "")) || (b == Unknown (Fact "") && a == NotUnknown (Fact "")) = Unknown (Fact "")
-  | otherwise = Unknown (Fact "")
 
-t_not (Known True) = Known False
-t_not (Known False) = Known True
-t_not (Unknown exp) = NotUnknown exp
-t_not (NotUnknown exp) = Unknown exp
-t_not other = other
+True @| _ = True
+_ @| True = True
+False @| b = b
+a @| False = a
+Unprovable @| _ = Unprovable
+_ @| Unprovable = Unprovable
+Unsolved a @| Unsolved b
+  | a == Not b = True
+  | Not a == b = True
+  | a == b = Unsolved a
+  | otherwise = Unsolved (a `Or` b)
+
+
+
+not :: State -> State
+
+not True = False
+not False = True
+not Unprovable = Unprovable
+not (Unsolved (Not a)) = Unsolved a
+not (Unsolved a) = Unsolved (Not a)
+
+
 
 (@^) :: State -> State -> State
-a @^ b = (a @| b) @+ t_not (a @+ b)
-
-areSameExpr :: State -> State -> Bool
-areSameExpr (Unknown e1) (NotUnknown e2) = e1 == e2
-areSameExpr (NotUnknown e1) (Unknown e2) = e1 == e2
-
+a @^ b = (a @| b) @+ not (a @+ b)
 
 mapSnd :: (b -> c) -> (a, b) -> (a, c)
 mapSnd f (a, b) = (a, f b)
