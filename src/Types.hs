@@ -13,7 +13,7 @@ module Types
   Init(Init),
   Query(Query),
   State(..),
-  Trilean(..),
+  t_not, (@+), (@|), (@^),
   FactState,
   rhs, lhs,
   mapSnd,
@@ -43,9 +43,18 @@ newtype Init = Init [Expr]
 -- | this type contains an Expr array. They are queries obtained by parsing.
 newtype Query = Query [Expr]
 
-data State = Unknown | NotUnknown | Known Bool | Ambiguous | Invalid deriving (Show, Eq)
+-- | Used to browse and find he state of a fact, Unknown is manda
+data State = Unknown Expr| NotUnknown Expr| Known Bool | Ambiguous deriving (Show)
 
 type FactState = (Expr, State)
+
+instance Eq State where
+  (Unknown _) == (Unknown _) = True
+  (NotUnknown _) == (NotUnknown _) = True
+  (Known k1) == (Known k2) = k1 == k2
+  Ambiguous == Ambiguous = True
+  Invalid == Invalid = True
+  _ == _ = False
 
 instance Show Expr where
     show (Xor e1 e2) = "(" ++ show e1 ++ "^" ++ show e2 ++ ")"

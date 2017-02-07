@@ -84,14 +84,14 @@ searchFact :: Expr -> [FactState] -> [Relation] -> Either String ([FactState], S
 searchFact goal knowledge rules =
   let
     concernedRules = inferRules rules goal
-    searchKnown = (goal, Unknown):knowledge -- We set our goal at Unknown to avoid looping on it
+    searchKnown = (goal, Unknown goal):knowledge -- We set our goal at Unknown to avoid looping on it
     result = resolveRules concernedRules rules searchKnown
   in case result of
     Left err -> Left err
-    Right (newknown, Unknown) -> Right ((goal, Known False):newknown, Known False)
+    Right (newknown, Unknown _) -> Right ((goal, Known False):newknown, Known False)
     Right (newknown, goalState) -> Right ((goal, goalState):newknown, goalState)
 
--- | function called withe the result of file parsing to start resolution
+-- | function called with the result of file parsing to start resolution
 launchResolution :: ([Relation], Init, Query) -> Either String [FactState]
 launchResolution (rules, Init init, Query query) =
   let translateToState (Not fact) = (fact, Known False)
