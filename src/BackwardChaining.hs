@@ -31,7 +31,7 @@ resolveRules  concernedRules rules knowledge =
     evalGoal (lhs `Imply` rhs) = ((specialCase rhs) `mapSnd`) <$> (eval knowledge rules lhs)
     evalGoal _ = error "Unreachable code"
   in
-  (foldl combinePair (Right ([], (Unknown (Fact "")))) . map (isAmbiguous . evalGoal)) concernedRules
+  (foldl combinePair (Right ([], (Unknown (Fact "")))) . map (evalGoal)) concernedRules
 
 
 -- ATTENTION C DU LOURDS
