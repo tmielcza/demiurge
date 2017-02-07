@@ -43,7 +43,7 @@ newtype Init = Init [Expr]
 -- | this type contains an Expr array. They are queries obtained by parsing.
 newtype Query = Query [Expr]
 
-data State = Unknown Bool | Known Bool | Ambiguous | Invalid deriving (Show, Eq)
+data State = Unknown | NotUnknown | Known Bool | Ambiguous | Invalid deriving (Show, Eq)
 
 type FactState = (Expr, State)
 
@@ -100,8 +100,8 @@ class (Eq t) => Trilean t where
 instance Trilean State where
     true = Known True
     false = Known False
-    unknown = Unknown True
-    notunknown = Unknown False
+    unknown = Unknown
+    notunknown = NotUnknown
     ambiguous = Ambiguous
 
 mapSnd :: (b -> c) -> (a, b) -> (a, c)
