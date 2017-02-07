@@ -7,6 +7,8 @@ import Types
 import Inference
 
 combineStates :: State -> State -> Either String State
+combineStates (NotUnknown _) s2 = Right s2
+combineStates s1 (NotUnknown _) = Right s1
 combineStates (Unknown _) s2 = Right s2
 combineStates s1 (Unknown _) = Right s1
 combineStates Ambiguous s2 = Right s2

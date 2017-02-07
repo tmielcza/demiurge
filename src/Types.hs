@@ -53,7 +53,6 @@ instance Eq State where
   (NotUnknown _) == (NotUnknown _) = True
   (Known k1) == (Known k2) = k1 == k2
   Ambiguous == Ambiguous = True
-  Invalid == Invalid = True
   _ == _ = False
 
 instance Show Expr where
@@ -107,13 +106,11 @@ a @| b
   | (a == Unknown (Fact "") && b == NotUnknown (Fact "")) || (b == Unknown (Fact "") && a == NotUnknown (Fact "")) = Unknown (Fact "")
   | otherwise = Unknown (Fact "")
 
-t_not :: State -> State
-t_not a
-  | a == (Known True) = (Known False)
-  | a == (Known False) = (Known True)
-  | a == Unknown exp = NotUnknown exp
-  | a == NotUnknown exp = Unknown exp
-  | otherwise = a
+t_not (Known True) = Known False
+t_not (Known False) = Known True
+t_not (Unknown exp) = NotUnknown exp
+t_not (NotUnknown exp) = Unknown exp
+t_not other = other
 
 (@^) :: State -> State -> State
 a @^ b = (a @| b) @+ t_not (a @+ b)
