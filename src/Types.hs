@@ -79,39 +79,49 @@ rhs (Imply _ r) = r
 lhs (Eq l _) = l
 lhs (Imply l _) = l
 
-class (Eq t) => Trilean t where
+{-class (Eq t) => Trilean t where
   true, false, ambiguous :: t --invalid est retourné mais jamais reçu puisqu'il est immediatement transformé en Left
-  unknown, notunknown :: t
+  unknown, Notunknown :: t
+  areSameExpr :: t -> t -> Bool
   t_not :: t -> t
-  (@+), (@|), (@^) :: t -> t -> t -- return true false unknown notunknown
-  a @+ b
-    | a == false = false
-    | b == false = false
-    | a == true && b == true = true
-    | a == ambiguous || b == ambiguous = ambiguous
-    | (a == unknown && b == notunknown) || (b == unknown && a == notunknown) = unknown
-    | otherwise = unknown
-  a @| b
-    | a == true = true
-    | b == true = true
-    | a == false && b == false = false
-    | a == ambiguous || b == ambiguous = ambiguous
-    | (a == unknown && b == notunknown) || (b == unknown && a == notunknown) = unknown
-    | otherwise = unknown
-  t_not a
-    | a == true = false
-    | a == false = true
-    | a == unknown = notunknown
-    | a == notunknown = unknown
-    | otherwise = a
-  a @^ b = (a @| b) @+ t_not (a @+ b)
+  (@+), (@|), (@^) :: t -> t -> t -- return true false unknown Notunknown-}
 
-instance Trilean State where
-    true = Known True
-    false = Known False
-    unknown = Unknown
-    notunknown = NotUnknown
-    ambiguous = Ambiguous
+(@+) :: State -> State -> State
+
+a @+ b
+  | a == (Known False) = (Known False)
+  | b == (Known False) = (Known False)
+  | a == (Known True) && b == (Known True) = (Known True)
+  | a == Ambiguous || b == Ambiguous = Ambiguous
+  | ((a == Unknown (Fact "") && b == NotUnknown (Fact "")) || (b == Unknown (Fact "") && a == NotUnknown (Fact ""))) && areSameExpr a b = (Known False)
+  | (a == Unknown (Fact "") && b == NotUnknown (Fact "")) || (b == Unknown (Fact "") && a == NotUnknown (Fact "")) = Unknown (Fact "")
+  | otherwise = Unknown (Fact "")
+
+(@|) :: State -> State -> State
+a @| b
+  | a == (Known True) = (Known True)
+  | b == (Known True) = (Known True)
+  | a == (Known False) && b == (Known False) = (Known False)
+  | a == Ambiguous || b == Ambiguous = Ambiguous
+  | ((a == Unknown (Fact "") && b == NotUnknown (Fact "")) || (b == Unknown (Fact "") && a == NotUnknown (Fact ""))) && areSameExpr a b = (Known True)
+  | (a == Unknown (Fact "") && b == NotUnknown (Fact "")) || (b == Unknown (Fact "") && a == NotUnknown (Fact "")) = Unknown (Fact "")
+  | otherwise = Unknown (Fact "")
+
+t_not :: State -> State
+t_not a
+  | a == (Known True) = (Known False)
+  | a == (Known False) = (Known True)
+  | a == Unknown exp = NotUnknown exp
+  | a == NotUnknown exp = Unknown exp
+  | otherwise = a
+
+(@^) :: State -> State -> State
+a @^ b = (a @| b) @+ t_not (a @+ b)
+
+areSameExpr :: State -> State -> Bool
+areSameExpr (Unknown e1) (NotUnknown e2) = e1 == e2
+areSameExpr (NotUnknown e1) (Unknown e2) = e1 == e2
+
 
 mapSnd :: (b -> c) -> (a, b) -> (a, c)
 mapSnd f (a, b) = (a, f b)
