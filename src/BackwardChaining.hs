@@ -6,32 +6,53 @@ module BackwardChaining
 import Types
 import Inference
 
+combineStates :: State -> State -> Either String State
+combineStates (Unknown _) s2 = Right s2
+combineStates s1 (Unknown _) = Right s1
+combineStates Ambiguous s2 = Right s2
+combineStates s1 Ambiguous = Right s1
+combineStates s1 s2
+    | s1 == s2 = Right s1
+    | otherwise = Left ("Incoherent rules and/or initial facts")
+
+combinePair :: Either String ([FactState], State) -> Either String ([FactState], State) -> Either String ([FactState], State)
+combinePair p1 p2 = do
+  (k1, s1) <- p1
+  (k2, s2) <- p2
+  fmap ((,) $ k1 ++ k2) $ combineStates s1 s2
+
 -- | loop that check the coherence of results
 resolveRules :: [Relation] -> [Relation] -> [FactState] ->  Either String ([FactState], State)
 resolveRules  concernedRules rules knowledge =
-  (foldl combinePair (Right ([], (Unknown))) . map (isAmbiguous . evalGoal)) concernedRules
-  where
+  let
     evalGoal :: Relation -> Either String ([FactState], State)
-    evalGoal (lhs `Imply` (Not _)) = (t_not `mapSnd`) <$> (eval knowledge rules lhs)
-    evalGoal (lhs `Imply` _) = eval knowledge rules lhs
+    evalGoal (lhs `Imply` rhs) = ((specialCase rhs) `mapSnd`) <$> (eval knowledge rules lhs)
     evalGoal _ = error "Unreachable code"
-    combinePair :: Either String ([FactState], State) -> Either String ([FactState], State) -> Either String ([FactState], State)
-    combinePair p1 p2 = do
-      (k1, s1) <- p1
-      (k2, s2) <- p2
-      fmap ((,) $ k1 ++ k2) $ combineStates s1 s2
-    combineStates :: State -> State -> Either String State
-    combineStates (Unknown) s2 = Right s2
-    combineStates s1 (Unknown) = Right s1
-    combineStates Ambiguous s2 = Right s2
-    combineStates s1 Ambiguous = Right s1
-    combineStates s1 s2
-      | s1 == s2 = Right s1
-      | otherwise = Left ("Incoherent rules and/or initial facts")
-    isAmbiguous ::  Either String ([FactState], State) ->  Either String ([FactState], State)
-    isAmbiguous (Right (kn, NotUnknown)) =  (Right (kn, Ambiguous)) -- return true, false, unknown, ambiguous
-    isAmbiguous pair = pair
+  in
+  (foldl combinePair (Right ([], (Unknown (Fact "")))) . map (isAmbiguous . evalGoal)) concernedRules
 
+
+-- ATTENTION C DU LOURDS
+ -- false
+ -- a => !a
+ -- b => !a
+
+ -- true
+ -- !a => a
+
+ -- ambiguous
+ -- !b => a
+
+
+specialCase :: Expr -> State -> State
+specialCase (Not rhs)  (Unknown expr)
+  | expr == rhs =  (Known False) -- a => !a
+  | otherwise =  Unknown expr
+specialCase rhs  (NotUnknown expr)
+  | expr == rhs =  (Known True) -- !a => a
+  | otherwise =  Ambiguous -- !b => a
+specialCase (Not rhs) (Known True) = (Known False)
+specialCase rhs state = state
 
 -- | Look for q fact in the knowledge or search it with the rules
 resolveFact :: Expr -> [FactState] -> [Relation] -> Either String ([FactState], State)
