@@ -127,4 +127,4 @@ spaces = do {munch (\c -> c == ' ' || c == '\t'); return ()}
 parse :: String -> Either String ([Relation], Init, Query)
 parse s = case readP_to_S program s of
   (x, _):_ -> Right x
-  _ -> Left "Error"
+  _ -> Left "Parse Error"
