@@ -49,7 +49,7 @@ specialCase :: Expr -> State -> State
 specialCase (Not rhs)  (Unsolved expr)
   | expr == rhs =  (False) -- a => !a
   | otherwise =  Unsolved expr
-specialCase rhs  (Unsolved expr)
+specialCase rhs  (Unsolved (Not expr))
   | expr == rhs =  (True) -- !a => a
   | otherwise =  Unprovable -- !b => a
 specialCase (Not rhs) (True) = (False)
@@ -89,7 +89,7 @@ searchFact goal knowledge rules =
     result = resolveRules concernedRules rules searchKnown
   in case result of
     Left err -> Left err
-    Right (newknown, Unsolved _) -> Right ((goal, False):newknown, False)
+--    Right (newknown, Unsolved _) -> Right ((goal, False):newknown, False)
     Right (newknown, goalState) -> Right ((goal, goalState):newknown, goalState)
 
 -- | function called with the result of file parsing to start resolution
