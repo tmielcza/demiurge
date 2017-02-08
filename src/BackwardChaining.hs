@@ -104,8 +104,8 @@ searchFact goal knowledge rules =
 -- | function called with the result of file parsing to start resolution
 launchResolution :: ([Relation], Init, Query) -> Either String [FactState]
 launchResolution (rules, Init init, Query query) =
-  let translateToState (Not fact) = (fact, False)
-      translateToState fact = (fact, True)
+  let translateToState (Not fact) = (fact, Types.False)
+      translateToState fact = (fact, Types.True)
       knowledge = map translateToState init
   in  loopOnQuery rules query knowledge
 
