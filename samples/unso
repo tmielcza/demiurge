@@ -1,7 +1,12 @@
-# go go go
+C => Reponsefaux
 
-C => D
+# ?Reponsefaux
+# C => Reponsefaux
+# ?C
+# !Responsefaux => !C
+# C = Unsolved (!Reponsefaux)
+# Unsolved (!ReponseFaux) => Unsolved (Reponsefaux)
 
 =
 
-?D
+?Reponsefaux
