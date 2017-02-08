@@ -5,7 +5,7 @@ module BackwardChaining
 
 import Types
 import Inference
-import Prelude hiding (True, False, not)
+import Prelude hiding ( not)
 
 combineStates :: State -> State -> Either String State
 combineStates (Unsolved _) s2 = Right s2
@@ -43,16 +43,25 @@ resolveRules  concernedRules rules knowledge =
 
  -- ambiguous
  -- !b => a
+isconjunctionwithexpr :: Expr -> Expr -> Bool
+isconjunctionwithexpr goal (lhs `And` rhs)
+  | lhs == Not goal || rhs == Not goal = Prelude.True
+  | Not lhs == goal || Not rhs == goal = Prelude.True
+  | otherwise = (isconjunctionwithexpr goal lhs) || (isconjunctionwithexpr goal rhs)
+isconjunctionwithexpr _ _ = Prelude.False
 
 
 specialCase :: Expr -> State -> State
 specialCase (Not rhs)  (Unsolved expr)
-  | expr == rhs =  (False) -- a => !a
+  | isconjunctionwithexpr (Not rhs) expr = Unprovable
+  | expr == rhs = Types.False -- a => !a
   | otherwise =  Unsolved expr
 specialCase rhs  (Unsolved (Not expr))
-  | expr == rhs =  (True) -- !a => a
+  | expr == rhs = Types.True -- !a => a
   | otherwise =  Unprovable -- !b => a
-specialCase (Not rhs) (True) = (False)
+specialCase rhs  (Unsolved expr)
+  | isconjunctionwithexpr (rhs) expr =  Unprovable
+specialCase (Not rhs) (Types.True) = Types.False
 specialCase rhs state = state
 
 -- | Look for q fact in the knowledge or search it with the rules
@@ -89,7 +98,7 @@ searchFact goal knowledge rules =
     result = resolveRules concernedRules rules searchKnown
   in case result of
     Left err -> Left err
---    Right (newknown, Unsolved _) -> Right ((goal, False):newknown, False)
+    Right (newknown, Unsolved _) -> Right ((goal, Types.False):newknown, Types.False)
     Right (newknown, goalState) -> Right ((goal, goalState):newknown, goalState)
 
 -- | function called with the result of file parsing to start resolution
