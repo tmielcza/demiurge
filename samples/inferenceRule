@@ -1,0 +1,10 @@
+P => Q # Modus ponens Q true
+R => S # Modus tollens R false
+(T | U) => V #  Disjunctive syllogism T == V = True
+P => !!W # Double negation P = True
+
+
+
+=P!SW!UT
+
+?QRVW

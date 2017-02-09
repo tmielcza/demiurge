@@ -114,7 +114,7 @@ parseSuite = testGroup "Parsing tests"
                  queryErrorTest "? A B C !R",
                  queryErrorTest "",
                  queryErrorTest "allyourbasearebelongtous"
-               ],
+               ]{-,
                testGroup "Parser"
                [
                  parseTest "A+B=>C\n=AB\n?C\n" "([{(A+B)=>C}],Init: [A,B],Query: [C])",
@@ -123,5 +123,5 @@ parseSuite = testGroup "Parsing tests"
                  parseTest "#tactatctatct\n\nA+B=>C#youplalala\n=AB#super\n?C#commentaire\n#derniere ligne\n" "([{(A+B)=>C}],Init: [A,B],Query: [C])",
                  parseTest "A+B=>C\nE <=> Q\n=AB\n?C\n" "([{(A+B)=>C},{E<=>Q}],Init: [A,B],Query: [C])",
                  parseFileTest "easy" "([{(A+C)=>B}],Init: [A,C],Query: [B])"
-               ]
+               ]-}
              ]

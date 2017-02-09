@@ -1,22 +1,5 @@
-# B => !B
-# F ^ G + F => B
-# B => E
+C => !E
+B => E
 
-A + E => B
-A => B|C
-
-A => B
-
-B => D
-
-=A
-
-A + !B => E
-
-=A
-
+=CB
 ?E
-
-
-# On a besoin de valeurs NotUnknown et Ambiguous
-# Si Unknown => NotUnknown ou NotUnknown => Unknown alors Ambiguous

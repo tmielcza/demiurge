@@ -1,0 +1,10 @@
+A => B
+T => W ^ Y
+C => !W
+B => T
+
+
+=AC
+
+?Y
+# Y est vrai
