@@ -15,7 +15,6 @@ module Types
   State(..),
   not, (@+), (@|), (@^),
   FactState,
-  rhs, lhs,
   mapSnd,
     ) where
 
@@ -66,14 +65,6 @@ instance Show Init where
 
 instance Show Query where
     show (Query facts) = "Query: "++ show facts
-
-rhs (Eq _ r) = r
-rhs (Imply _ r) = r
-
-lhs (Eq l _) = l
-lhs (Imply l _) = l
-
-
 
 (@+) :: State -> State -> State
 
