@@ -61,7 +61,8 @@ specialCase rhs  (Unsolved (Not expr))
   | otherwise =  Unprovable -- !b => a
 specialCase rhs  (Unsolved expr)
   | isconjunctionwithexpr (rhs) expr =  Unprovable
-specialCase (Not rhs) (Types.True) = Types.False
+specialCase (Not rhs) Types.True = Types.False
+specialCase rhs Types.False = Unsolved rhs -- problem expr dans rhs
 specialCase rhs state = state
 
 -- | Look for q fact in the knowledge or search it with the rules
