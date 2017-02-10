@@ -1,33 +1,20 @@
 module Interactive where
 
-import Parse(parseInit)
+import Parse(parseInit, parseQuery)
 import BackwardChaining(launchResolution)
 import Types
 import Data.List
-
-getInteractiveFacts:: Either String ([Relation], Init, Query) -> IO ()
-getInteractiveFacts triple = do
-  displayInitDatas triple
-  print "The previous facts will be removed, please write your fact like in this example : \"=A!CF\""
-  rep <- getLine
-  print $ do {triple >>= (parseAndResolveInteractive rep)}
-  askForChange triple
-
-parseAndResolveInteractive :: String -> ([Relation], Init, Query) -> Either String [FactState]
-parseAndResolveInteractive datas (rules, init, query) = do
-  let triple = fmap (\x -> (rules, refactoInitList init x, query)) (parseInit datas)
-  triple >>= launchResolution
-
-refactoInitList (Init facts)  (Init news) = Init $ unionBy (\x y-> x == y || x == Not y || Not x == y) news facts
-refactoQueryList (Query facts)  (Query news) = Query (news `union` facts)
+import System.IO
 
 askForChange:: Either String ([Relation], Init, Query) -> IO()
-askForChange parsed = do
+askForChange (Right parsed) = do
   print "Do you want to change the initial facts given? (y/n) :"
   rep <- getLine
   if rep == "y"
-  then getInteractiveFacts parsed
-  else print "Bye"; return ()
+  then do {displayInitDatas (Right parsed);promptAddData (Right parsed); askForChange (Right parsed)}
+  else print "Bye"
+
+askForChange (Left _) = print "Their was an error in your file correct it before using interactive maode with it";
 
 displayInitDatas (Right(rls, i, q)) =
   let
@@ -35,6 +22,38 @@ displayInitDatas (Right(rls, i, q)) =
       displayRule (r:rs) = do { print r ; displayRule rs}
   in do { displayRule rls; print i; print q}
 displayInitDatas _ = print "no datas from the previous resolution"
+
+
+prompt :: ([Relation], Init, Query) -> IO(Either String ([Relation], Init, Query))
+prompt datas = do
+  putStr "$> "
+  hFlush stdout
+  line <- getLine
+  if line == "q"
+    then return (Right datas)
+    else readEntry datas line
+
+(+++) :: Either String a -> Either String a -> Either String a
+Left e +++ other = other
+Right a +++ _ = Right a
+
+
+readEntry :: ([Relation], Init, Query) -> String ->IO(Either String ([Relation], Init, Query))
+readEntry (r, i, q) line =
+  let res = fmap (\x -> (r, x, q)) (parseInit line) +++
+               fmap (\x -> (r, i, x)) (parseQuery line)
+  in
+  trace (show res) (case res of
+    Right triple -> prompt triple
+    Left error -> do {print $ ("input: " ++ error); prompt (r, i, q);})
+
+promptAddData :: Either String ([Relation], Init, Query) -> IO()
+promptAddData (Right triple) = do
+  datas <- prompt triple
+  print $ do{ datas >>= launchResolution}
+  return ()
+
+promptAddData _ = print "your previous file was incorrect, impossible to launch the interactive mode"
 
 
 
