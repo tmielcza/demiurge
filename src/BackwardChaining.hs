@@ -24,6 +24,7 @@ combinePair p1 p2 = do
 
 -- | loop that check the coherence of results
 resolveRules :: [Relation] -> [Relation] -> [FactState] ->  Either String ([FactState], State)
+resolveRules  [] rules knowledge = Right (knowledge, (snd . last) knowledge)
 resolveRules  concernedRules rules knowledge =
   let
     evalGoal :: Relation -> Either String ([FactState], State)
