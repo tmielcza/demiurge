@@ -1,0 +1,8 @@
+A => B
+!A => B
+
+A => Is_not_incoherent
+
+=
+
+?Is_not_incoherent

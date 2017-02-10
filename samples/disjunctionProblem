@@ -1,42 +1,32 @@
-  # Quelques petites regles tres lisibles pour nous et qui pourtant ne sont pas comprises par le moteur.
-  # Mais pas de panique, il suffit d'ajouter deux regles d'inference pour que le tout fonctionne
-  # Comme sur des roulettes, j'ai envie de dire.
-  # Ou bien encore comme papa dans maman.
-
 A | !A => Devrait_etre_vrai
-  # La premiere c'est le principe du tiers exclus, qui dit ceci :
   # A | !A est forcement vrai
   # Et par extention, A | !A => D , implique D
 
 
-A | !A | B => Devrait_etre_vrai
-  # La deuxieme est l'elimination de la disjonction, qui dit ceci :
+B | A | !A => Devrait_etre_vrai_aussi
   # A | B => D revient a dire A => D et B => D
   # Dans notre exemple, B | A | !A => D
   # revient a dire B => D et A | !A => D, donc D est vrai
 
 
-A | B | !A => Devrait_etre_vrai
-  # Encore une : la commutativite
+A | B | !A => Devrait_encore_etre_vrai
   # A | B revient a dire B | A
   # Donc ici, A | B | !A => D revient a dire B | A | !A => D,
   # et on a deja prouve que cette expression implique que D est vrai.
 
 
-A => Devrait_etre_vrai
-!A => Devrait_etre_vrai
-  # Dans ce cas la je ne sais pas trop, a part utiliser la reciproque (?) de l'elimination de la disjonction
-  # Et donc faire de A => C et !A => D, A | !A => D, donc D est vrai
-  # Mais faire tout ca a chaque fois pour toutes les possibilites de toutes les regles, ca fait beaucoup quand meme.
-
-  # Donc ce que je me dis, c'est que le plus simple reste encore de conserver les expressions dans les Unprovable
-  # Dans notre cas, on cherche D, ce qui d'apres les retours de nos deux regles, nous donne:
-  # Unprovable A et Unprovable !A, prouvent que D est vrai
-  # Je dis "et", mais ici le vrai mot est "ou" car il suffit que l'un des deux soit vrai pour que D soit vrai. C'est bien une conjonction.
+A => Devrait_toujours_etre_vrai
+!A => Devrait_toujours_etre_vrai
   # Donc on a A | !A => D
-  # Donc D est vrai (principe du tiers exclus)
-  # (Donc quand je disais que je savais pas trop, en fait je savais. Et j'ai toujours su.)
+  # Donc D est vrai
+
+# FIXME:
+# A => Devrait_etre_positif
+# B => Devrait_etre_positif
+# !A => Devrait_etre_positif
+  # Donc A | B | !A => D
+  # Donc on l'a deja prouve
 
 =                       # Pas faits initiaux, YOLO !!!
 
-?Devrait_etre_vrai      # Et il ne l'est pas l'animal !
+?Devrait_etre_vraiDevrait_etre_positifDevrait_toujours_etre_vraiDevrait_encore_etre_vraiDevrait_etre_vrai_aussi      # Et il ne l'est pas l'animal !
