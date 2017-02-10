@@ -34,6 +34,8 @@ module Parse
   initFacts,
   queryFacts,
   expr,
+  parseInit,
+  parseQuery
     ) where
 
 
@@ -123,8 +125,21 @@ comment = do {char '#'; munch(/= '\n'); return ()}
 spaces :: ReadP ()
 spaces = do {munch (\c -> c == ' ' || c == '\t'); return ()}
 
+extractFromReadP :: ReadP a -> String -> Either String a
+extractFromReadP readP s =
+  let parsed = [x | (x, "") <- readP_to_S readP s]
+  in case parsed of
+  x:_ -> Right x
+  _ -> Left "Parse Error"
+
 -- | Send the string to the parser `program` and check if the return is an error
 parse :: String -> Either String ([Relation], Init, Query)
-parse s = case readP_to_S program s of
-  (x, _):_ -> Right x
-  _ -> Left "Parse Error"
+parse s = extractFromReadP program s
+
+-- | Parse the String and return a Init if initFacts returns Right. Used in the interactive mode.
+parseInit :: String -> Either String Init
+parseInit s = extractFromReadP initFacts s
+
+-- | Parse the String and return a Init if queryFacts returns Right. Used in the interactive mode.
+parseQuery :: String -> Either String Query
+parseQuery s = extractFromReadP queryFacts s
