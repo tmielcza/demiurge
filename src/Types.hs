@@ -80,8 +80,6 @@ Unsolved a @+ Unsolved b
   | a == b = Unsolved a
   | otherwise = Unsolved (a `And` b)
 
-
-
 (@|) :: State -> State -> State
 
 True @| _ = True
@@ -96,8 +94,6 @@ Unsolved a @| Unsolved b
   | a == b = Unsolved a
   | otherwise = Unsolved (a `Or` b)
 
-
-
 not :: State -> State
 
 not True = False
@@ -106,12 +102,15 @@ not Unprovable = Unprovable
 not (Unsolved (Not a)) = Unsolved a
 not (Unsolved a) = Unsolved (Not a)
 
-
-
 (@^) :: State -> State -> State
 a @^ b = (a @| b) @+ not (a @+ b)
 
 mapSnd :: (b -> c) -> (a, b) -> (a, c)
 mapSnd f (a, b) = (a, f b)
 
+displayEitherFactStates (Right((fact, status):[])) = print (show fact ++" is "++ show status)
+displayEitherFactStates (Right((fact, status):rs)) = do
+  print (show fact ++" is "++ show status)
+  displayEitherFactStates (Right rs)
+displayEitherFactStates (Left err) = print $ "Error : " ++ show err
 
