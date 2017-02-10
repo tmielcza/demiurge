@@ -8,10 +8,15 @@ import Inference
 import Prelude hiding ( not)
 
 combineStates :: State -> State -> Either String State
+combineStates (Unsolved a) (Unsolved b) = Right (Unsolved a @| Unsolved b)
+combineStates (Unsolved a) (Unprovable b) = Right (Unsolved a @| Unprovable b)
+combineStates (Unprovable a) (Unsolved b) = Right (Unprovable a @| Unsolved b)
+combineStates (Unprovable a) (Unprovable b) = Right (Unprovable a @| Unprovable b)
+
 combineStates (Unsolved _) s2 = Right s2
 combineStates s1 (Unsolved _) = Right s1
-combineStates Unprovable s2 = Right s2
-combineStates s1 Unprovable = Right s1
+combineStates (Unprovable _) s2 = Right s2
+combineStates s1 (Unprovable _) = Right s1
 combineStates s1 s2
     | s1 == s2 = Right s1
     | otherwise = Left ("Incoherent rules and/or initial facts")
@@ -54,15 +59,15 @@ isconjunctionwithexpr _ _ = Prelude.False
 
 specialCase :: Expr -> State -> State
 specialCase (Not rhs)  (Unsolved expr)
-  | isconjunctionwithexpr (Not rhs) expr = Unprovable
+  | isconjunctionwithexpr (Not rhs) expr = Unprovable expr
   | expr == rhs = Types.False -- a => !a
   | otherwise =  Unsolved expr
 specialCase rhs  (Unsolved (Not expr))
   | expr == rhs = Types.True -- !a => a
-  | otherwise =  Unprovable -- !b => a
+  | otherwise =  Unprovable (Not expr) -- !b => a
 specialCase rhs  (Unsolved expr)
-  | isconjunctionwithexpr (rhs) expr =  Unprovable
-specialCase (Not rhs) Types.True = Types.False
+  | isconjunctionwithexpr (rhs) expr =  Unprovable expr
+specialCase (Not _) Types.True = Types.False
 specialCase rhs Types.False = Unsolved rhs -- problem expr dans rhs
 specialCase rhs state = state
 

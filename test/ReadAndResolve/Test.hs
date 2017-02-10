@@ -19,7 +19,7 @@ fileSuite = testGroup "Files tests"
               resolveFileTest "samples/conjunction" "Right [(C,False)]",
               resolveFileTest "samples/invalid" "Left \"Incoherent rules and/or initial facts\"",
               resolveFileTest "samples/subject" "Left \"Incoherent rules and/or initial facts\"",
-              resolveFileTest "samples/test1" "Right [(B,Unprovable),(D,Unprovable)]",
+              resolveFileTest "samples/test1" "Right [(B,Unprovable !(!D+!B)),(D,Unprovable (!D+!B))]",
               resolveFileTest "samples/test2" "Right [(Y,True)]",
               resolveFileTest "samples/testAnonA" "Right [(Enfaitcestfaux,False)]",
               resolveFileTest "samples/transposition" "Right [(R,True)]",

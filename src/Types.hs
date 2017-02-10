@@ -43,7 +43,7 @@ newtype Init = Init [Expr]
 newtype Query = Query [Expr]
 
 -- | Used to browse and find he state of a fact, Unknown is manda
-data State = Unsolved Expr | True | False | Unprovable
+data State = Unsolved Expr | True | False | Unprovable Expr
   deriving (Show, Eq)
 
 type FactState = (Expr, State)
@@ -72,8 +72,13 @@ False @+ _ = False
 _ @+ False = False
 True @+ b = b
 a @+ True = a
-Unprovable @+ _ = Unprovable
-_ @+ Unprovable = Unprovable
+Unprovable a @+ Unsolved b = Unsolved (a `And` b)
+Unsolved a @+ Unprovable b = Unsolved (a `And` b)
+Unprovable a @+ Unprovable b
+  | a == Not b = False
+  | Not b == a = False
+  | a == b = Unprovable a
+  | otherwise = Unprovable (a `And` b)
 Unsolved a @+ Unsolved b
   | a == Not b = False
   | Not a == b = False
@@ -86,8 +91,13 @@ True @| _ = True
 _ @| True = True
 False @| b = b
 a @| False = a
-Unprovable @| _ = Unprovable
-_ @| Unprovable = Unprovable
+Unprovable a @| Unsolved b = Unsolved (a `Or` b)
+Unsolved a @| Unprovable b = Unsolved (a `Or` b)
+Unprovable a @| Unprovable b
+  | a == Not b = True
+  | Not a == b = True
+  | a == b = Unprovable a
+  | otherwise = Unprovable (a `Or` b)
 Unsolved a @| Unsolved b
   | a == Not b = True
   | Not a == b = True
@@ -98,7 +108,8 @@ not :: State -> State
 
 not True = False
 not False = True
-not Unprovable = Unprovable
+not (Unprovable (Not a)) = Unprovable a
+not (Unprovable a) = Unprovable (Not a)
 not (Unsolved (Not a)) = Unsolved a
 not (Unsolved a) = Unsolved (Not a)
 
