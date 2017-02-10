@@ -29,7 +29,7 @@ combinePair p1 p2 = do
 
 -- | loop that check the coherence of results
 resolveRules :: [Relation] -> [Relation] -> [FactState] ->  Either String ([FactState], State)
-resolveRules [] rules knowledge = Right (knowledge, (snd . head) knowledge)
+resolveRules [] _ knowledge = Right (knowledge, (snd . head) knowledge)
 resolveRules concernedRules rules knowledge =
   let
     evalGoal :: Relation -> Either String ([FactState], State)
@@ -39,16 +39,6 @@ resolveRules concernedRules rules knowledge =
   (foldl1 combinePair . map (evalGoal)) concernedRules
 
 
--- ATTENTION C DU LOURDS
- -- false
- -- a => !a
- -- b => !a
-
- -- true
- -- !a => a
-
- -- ambiguous
- -- !b => a
 isconjunctionwithexpr :: Expr -> Expr -> Bool
 isconjunctionwithexpr goal (lhs `And` rhs)
   | lhs == Not goal || rhs == Not goal = Prelude.True
@@ -69,7 +59,7 @@ specialCase rhs  (Unsolved expr)
   | isconjunctionwithexpr (rhs) expr =  Unprovable expr
 specialCase (Not _) Types.True = Types.False
 specialCase rhs Types.False = Unsolved rhs -- problem expr dans rhs
-specialCase rhs state = state
+specialCase _ state = state
 
 -- | Look for q fact in the knowledge or search it with the rules
 resolveFact :: Expr -> [FactState] -> [Relation] -> Either String ([FactState], State)

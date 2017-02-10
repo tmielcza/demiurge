@@ -3,7 +3,7 @@ module Interactive where
 import Parse(parseInit, parseQuery)
 import BackwardChaining(launchResolution)
 import Types
-import Data.List
+import Data.List()
 import System.IO
 
 askForChange:: Either String ([Relation], Init, Query) -> IO()
@@ -34,7 +34,7 @@ prompt datas = do
     else readEntry datas line
 
 (+++) :: Either String a -> Either String a -> Either String a
-Left e +++ other = other
+Left _ +++ other = other
 Right a +++ _ = Right a
 
 
@@ -43,9 +43,9 @@ readEntry (r, i, q) line =
   let res = fmap (\x -> (r, x, q)) (parseInit line) +++
                fmap (\x -> (r, i, x)) (parseQuery line)
   in
-  trace (show res) (case res of
+  case res of
     Right triple -> prompt triple
-    Left error -> do {print $ ("input: " ++ error); prompt (r, i, q);})
+    Left err -> do {print $ ("input: " ++ err); prompt (r, i, q);}
 
 promptAddData :: Either String ([Relation], Init, Query) -> IO()
 promptAddData (Right triple) = do

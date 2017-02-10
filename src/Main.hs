@@ -4,8 +4,9 @@ import System.Environment
 main = do
   args <- getArgs
   if ((length args) == 1) && ((args !! 0) /= "i")
-    then
-      readAndResolve (args !! 0) >>= print
+    then do
+      _ <- readAndResolve (args !! 0)
+      return ()
   else if (length args) == 2 && (args !! 0) == "i"
     then
       interactiveMode (args !! 1)

@@ -10,10 +10,12 @@ parseFile path = do
   content <- readFile (path)
   return (parse content)
 
-readAndResolve :: String -> IO ()
+readAndResolve :: String -> IO String
 readAndResolve filename= do
   parsed <- parseFile filename
-  print $ do {parsed >>= launchResolution}
+  let ret = do {parsed >>= launchResolution}
+  print ret
+  return (show ret)
 
 interactiveMode:: String -> IO ()
 interactiveMode filename = do
