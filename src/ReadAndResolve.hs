@@ -12,5 +12,13 @@ readAndResolve filename= do
   case parsed of
      Right triple -> do
       let ret = launchResolution triple
-      return (show ret)
-     Left error -> do { print error; return error }
+      displaySimpleResolution ret
+     Left error -> do { print error; return () }
+
+displaySimpleResolution (Right((fact, status):[])) = print (show fact ++" is "++ show status)
+
+displaySimpleResolution (Right((fact, status):rs)) = do
+  print (show fact ++" is "++ show status)
+  displaySimpleResolution (Right rs)
+
+displaySimpleResolution (Left err) = print $ "Error : " ++ show err
