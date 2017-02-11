@@ -1,0 +1,6 @@
+Maybe | !Maybe => True
+
+=
+
+# Ici Maybe ne devrait pas etre vrai
+?MaybeTrue

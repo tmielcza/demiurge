@@ -1,0 +1,6 @@
+!A ^ !B => A
+
+=
+
+# Tout devrait etre faux.
+?AB
