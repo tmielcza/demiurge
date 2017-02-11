@@ -39,24 +39,22 @@ resolveRules concernedRules rules knowledge =
   (foldl1 combinePair . map (evalGoal)) concernedRules
 
 
-isconjunctionwithexpr :: Expr -> Expr -> Bool
-isconjunctionwithexpr goal (lhs `And` rhs)
-  | lhs == Not goal || rhs == Not goal = Prelude.True
-  | Not lhs == goal || Not rhs == goal = Prelude.True
-  | otherwise = (isconjunctionwithexpr goal lhs) || (isconjunctionwithexpr goal rhs)
-isconjunctionwithexpr _ _ = Prelude.False
+conjunctionContainsInverseExpr :: Expr -> Expr -> Bool
+conjunctionContainsInverseExpr goal (lhs `And` rhs) =
+  (conjunctionContainsInverseExpr goal lhs) || (conjunctionContainsInverseExpr goal rhs)
+conjunctionContainsInverseExpr goal expr = goal == Not expr || Not goal == expr
 
 
 specialCase :: Expr -> State -> State
 specialCase (Not rhs)  (Unsolved expr)
-  | isconjunctionwithexpr (Not rhs) expr = Unprovable expr
+  | conjunctionContainsInverseExpr (Not rhs) expr = Unprovable expr
   | expr == rhs = Types.False -- a => !a
   | otherwise =  Unsolved expr
 specialCase rhs  (Unsolved (Not expr))
   | expr == rhs = Types.True -- !a => a
   | otherwise =  Unprovable (Not expr) -- !b => a
 specialCase rhs  (Unsolved expr)
-  | isconjunctionwithexpr (rhs) expr =  Unprovable expr
+  | conjunctionContainsInverseExpr (rhs) expr = Unprovable expr
 specialCase (Not _) Types.True = Types.False
 specialCase rhs Types.False = Unsolved rhs -- problem expr dans rhs
 specialCase _ state = state
