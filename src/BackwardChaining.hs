@@ -47,7 +47,7 @@ conjunctionContainsInverseExpr goal expr = goal == Not expr || Not goal == expr
 
 specialCase :: Expr -> State -> State
 specialCase (Not rhs)  (Unsolved expr)
-  | conjunctionContainsInverseExpr (Not rhs) expr = Unprovable expr
+  | conjunctionContainsInverseExpr (Not rhs) expr = Unsolved expr -- Q: When is it run ?
   | expr == rhs = Types.False -- a => !a
   | otherwise =  Unsolved expr
 specialCase rhs  (Unsolved (Not expr))
