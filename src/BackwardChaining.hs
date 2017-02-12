@@ -106,9 +106,7 @@ launchResolution (rules, Init init, Query query) =
 
 -- | loop the resolution on each query sent
 loopOnQuery :: [Relation] -> [Expr] -> [FactState] -> Either String [FactState]
-loopOnQuery rules (q:qs) knowledge = do
-  let  ret = resolveFact q knowledge rules
-  case ret of
-    Right(newknowledge, result) -> (:)(q, result) <$> loopOnQuery rules qs (knowledge ++ newknowledge)
-    Left err -> Left err
-loopOnQuery _ [] _ = Right []
+loopOnQuery rules (query:queries) knowledge = do
+      (newKnowledge, result) <- resolveFact query knowledge rules
+      (:)(query, result) <$> loopOnQuery rules queries (knowledge ++ newKnowledge)
+loopOnQuery _ [] _ = return []
