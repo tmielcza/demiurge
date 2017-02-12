@@ -51,7 +51,7 @@ program = do {optional newlineList; rules <- relationList; newlineList; facts <-
 
 -- | Parser for the group of rules
 relationList :: ReadP [Relation]
-relationList = do { x <- relation `sepBy1` newlineList; return x}
+relationList = relation `sepBy1` newlineList
 
 -- | Parser for a rule
 relation :: ReadP Relation
@@ -95,23 +95,23 @@ fact = do {y <- satisfy isUpper; x <- many (satisfy isLower +++ char '_'); retur
 
 -- | Parser of relation operator, define if it's an Implication or an Equivalence
 relationOp :: ReadP (Expr -> Expr -> Relation)
-relationOp = do { string "=>"; return (Imply) } +++ do { string "<=>"; return (Eq) }
+relationOp = do { string "=>"; return Imply } +++ do { string "<=>"; return Eq }
 
 -- | Consume the '^' to return the constructor Xor
 xorOp :: ReadP (Expr -> Expr -> Expr)
-xorOp = do { char '^'; return (Xor) }
+xorOp = do { char '^'; return Xor }
 
 -- | Consume the '|' to return the constructor Or
 orOp :: ReadP (Expr -> Expr -> Expr)
-orOp = do { char '|'; return (Or) }
+orOp = do { char '|'; return Or }
 
 -- | Consume the '+' to return the constructor And
 andOp :: ReadP (Expr -> Expr -> Expr)
-andOp = do { char '+'; return (And) }
+andOp = do { char '+'; return And }
 
 -- | Consume several lines containing comments or nothing
 newlineList :: ReadP ()
-newlineList = skipMany1(endOfLine)
+newlineList = skipMany1 endOfLine
 
 -- | Consume the line until its end '\n' and an optional comments befor
 endOfLine :: ReadP ()
@@ -134,12 +134,12 @@ extractFromReadP readP s =
 
 -- | Send the string to the parser `program` and check if the return is an error
 parse :: String -> Either String ([Relation], Init, Query)
-parse s = extractFromReadP program s
+parse = extractFromReadP program
 
 -- | Parse the String and return a Init if initFacts returns Right. Used in the interactive mode.
 parseInit :: String -> Either String Init
-parseInit s = extractFromReadP initFacts s
+parseInit = extractFromReadP initFacts
 
 -- | Parse the String and return a Init if queryFacts returns Right. Used in the interactive mode.
 parseQuery :: String -> Either String Query
-parseQuery s = extractFromReadP queryFacts s
+parseQuery = extractFromReadP queryFacts

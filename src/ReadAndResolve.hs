@@ -13,13 +13,13 @@ parseFile path = do
 readAndResolve :: String -> IO (Either String [FactState])
 readAndResolve filename= do
   parsed <- parseFile filename
-  let ret = do {parsed >>= launchResolution}
+  let ret = parsed >>= launchResolution
   print ret
   return (ret)
 
 interactiveMode:: String -> IO ()
 interactiveMode filename = do
   parsed <- parseFile filename
-  print $ do {parsed >>= launchResolution}
+  print (parsed >>= launchResolution)
   askForChange parsed
   return ()

@@ -20,7 +20,7 @@ infer (premices `Imply` (lhs `Xor` rhs)) goal =
 
 
 -- inference of not rules
-infer (rhs `Imply` (Not (Not lhs))) goal =
+infer (rhs `Imply` Not (Not lhs)) goal =
   infer (rhs `Imply` lhs) goal
 
 infer (premices `Imply` Not (lhs `And` rhs)) goal =
@@ -38,28 +38,13 @@ infer r@(_ `Imply` fact) goal
   | Not goal == fact = [r]
   | otherwise    = []
 
-{-
---distributive rule
-infer (premices `Imply` ((lhs `Or` rhs) `And` andfact)) goal =
-  premices `Imply` lhs `And` andfact `Or` rhs `And` andfact
-
-infer (premices `Imply` (andfact `And` (lhs `Or` rhs)) ) goal =
-  premices `Imply` (lhs `And` andfact) `Or` (rhs `And` andfact)
--}
-
 --modus tollens or transposition
 launchInferences ( lhs `Imply` rhs) goal =
-  infer ( lhs `Imply` rhs) goal ++ infer ( Not(rhs) `Imply` Not(lhs)) goal
+  infer ( lhs `Imply` rhs) goal ++ infer ( Not rhs `Imply` Not lhs) goal
 
 -- distribution of Equivalence in implications
 launchInferences (rhs `Eq` lhs) goal =
   launchInferences (rhs `Imply` lhs) goal ++ launchInferences (lhs `Imply` rhs) goal
 
-inferRules (r : listRules) goal = (launchInferences r goal) ++ (inferRules listRules goal)
-inferRules [] goal = []
-
-{-
-getInferedRules :: [Relation] -> Expr -> [Relation]
-getInferedRules rules goal =
--}
-
+-- inferRules :: [Relation] -> Expr -> [Relation]
+inferRules rules goal = foldr (\r -> (++) (launchInferences r goal)) [] rules

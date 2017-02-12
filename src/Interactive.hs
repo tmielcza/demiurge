@@ -18,7 +18,7 @@ askForChange (Left _) = print "Their was an error in your file correct it before
 
 displayInitDatas (Right(rls, i, q)) =
   let
-      displayRule (r:[]) = print r
+      displayRule [r] = print r
       displayRule (r:rs) = do { print r ; displayRule rs}
   in do { displayRule rls; print i; print q}
 displayInitDatas _ = print "no datas from the previous resolution"
@@ -45,12 +45,12 @@ readEntry (r, i, q) line =
   in
   case res of
     Right triple -> prompt triple
-    Left err -> do {print $ ("input: " ++ err); prompt (r, i, q);}
+    Left err -> do {print ("input: " ++ err); prompt (r, i, q);}
 
 promptAddData :: Either String ([Relation], Init, Query) -> IO()
 promptAddData (Right triple) = do
   datas <- prompt triple
-  print $ do{ datas >>= launchResolution}
+  print (datas >>= launchResolution)
   return ()
 
 promptAddData _ = print "your previous file was incorrect, impossible to launch the interactive mode"
