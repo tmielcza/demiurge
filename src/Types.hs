@@ -18,7 +18,8 @@ module Types
   mapSnd,
     ) where
 
-import Prelude hiding (True, False, not)
+import Prelude hiding (Bool(..),not)
+import qualified Prelude (Bool(..))
 
 -- | the type of expressions all constructors are recursives except Fact
 data Expr = Xor Expr Expr |
@@ -26,7 +27,7 @@ data Expr = Xor Expr Expr |
             And Expr Expr |
             Fact String |
             Not Expr
-            deriving (Eq)
+
 infixl 4 `Xor`
 infixl 5 `Or`
 infixl 6 `And`
@@ -48,6 +49,20 @@ data State = Unsolved Expr | True | False | Unprovable Expr
 
 type FactState = (Expr, State)
 
+instance Eq Expr where
+    (And a1 b1) == (And a2 b2) = cmpBinaryExprSides a1 a2 b1 b2
+    (Or a1 b1) == (Or a2 b2) = cmpBinaryExprSides a1 a2 b1 b2
+    (Xor a1 b1) == (Xor a2 b2) = cmpBinaryExprSides a1 a2 b1 b2
+    a == Not (Not b) = a == b
+    Not (Not a) == b = b == a
+    (Not a) == (Not b) = a == b
+    (Fact a) == (Fact b) = a == b
+    a == b = Prelude.False
+
+cmpBinaryExprSides lhs1 rhs1 lhs2 rhs2
+  | lhs1 == lhs2 && rhs1 == rhs2 = Prelude.True
+  | lhs1 == rhs2 && lhs2 == rhs1 = Prelude.True
+  | otherwise = Prelude.False
 
 instance Show Expr where
     show (Xor e1 e2) = "(" ++ show e1 ++ "^" ++ show e2 ++ ")"
