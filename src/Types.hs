@@ -141,3 +141,10 @@ displayEitherFactStates (Right((fact, status):rs)) = do
   displayEitherFactStates (Right rs)
 displayEitherFactStates (Left err) = print $ "Error : " ++ show err
 
+
+foldExpr :: (Expr -> a) -> Expr -> a
+foldExpr f (lhs `Xor` rhs) = (foldExpr f lhs) @^ (foldExpr f rhs)
+foldExpr f (lhs `Or` rhs) = (foldExpr f lhs) @| (foldExpr f rhs)
+foldExpr f (lhs `And` rhs) = (foldExpr f lhs) @+ (foldExpr f rhs)
+foldExpr f (Not e) = not (foldExpr f e)
+foldExpr f (Fact e) = f (Fact e)
