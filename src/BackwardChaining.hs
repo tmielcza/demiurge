@@ -75,6 +75,8 @@ eval knowledge rulesList expr = do
   (Resolved r) <- foldExprM ((Resolved <$>) . resolveFact' knowledge rulesList) expr
   return r
 
+
+-- Should knowledge be updated between evaluations ?
 {-
 eval knowledge rulesList expr =
   let shortEval = eval knowledge rulesList -- eval shortened
