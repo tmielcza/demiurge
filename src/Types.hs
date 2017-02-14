@@ -152,3 +152,31 @@ compareExprInOr defaultconstructor a b
   | Not a == b = True
   | a == b = defaultconstructor a
   | otherwise = defaultconstructor (a `Or` b)
+
+newtype Resolved = Resolved ([FactState], State)
+
+instance Logical Resolved where
+  Resolved (lknowledge, lstate) @+ Resolved (rknowledge, rstate) =
+    Resolved (lknowledge ++ rknowledge, lstate @+ rstate)
+  Resolved (lknowledge, lstate) @| Resolved (rknowledge, rstate) =
+    Resolved (lknowledge ++ rknowledge, lstate @| rstate)
+  Resolved (lknowledge, lstate) @^ Resolved (rknowledge, rstate) =
+    Resolved (lknowledge ++ rknowledge, lstate @^ rstate)
+  not (Resolved (knowledge, state)) = Resolved (knowledge, not state)
+
+
+foldExprM :: (Monad m, Logical a) => (Expr -> m a) -> Expr -> m a
+foldExprM f (lhs `Xor` rhs) = do
+  l <- foldExprM f lhs
+  r <- foldExprM f rhs
+  return (l @^ r)
+foldExprM f (lhs `Or` rhs) = do
+  l <- foldExprM f lhs
+  r <- foldExprM f rhs
+  return (l @| r)
+foldExprM f (lhs `And` rhs) = do
+  l <- foldExprM f lhs
+  r <- foldExprM f rhs
+  return (l @+ r)
+foldExprM f (Not e) = do {e' <- foldExprM f e; return e'}
+foldExprM f (Fact e) = f (Fact e)
