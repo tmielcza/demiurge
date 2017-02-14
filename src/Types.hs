@@ -16,6 +16,9 @@ module Types
   not, (@+), (@|), (@^),
   FactState,
   mapSnd,
+  foldExprM,
+  Resolved(Resolved),
+  Logical
     ) where
 
 import Prelude hiding (Bool(..),not)

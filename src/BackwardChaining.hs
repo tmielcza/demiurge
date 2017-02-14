@@ -66,8 +66,16 @@ resolveFact subgoal knowledge rules =
     Just st -> Right ([], st)
     Nothing  -> searchFact subgoal knowledge rules
 
+resolveFact' k r e = resolveFact e k r
+
 -- | the function that evaluate an Expression
 eval :: [FactState] -> [Relation] -> Expr -> Either String ([FactState], State)
+
+eval knowledge rulesList expr = do
+  (Resolved r) <- foldExprM ((Resolved <$>) . resolveFact' knowledge rulesList) expr
+  return r
+
+{-
 eval knowledge rulesList expr =
   let shortEval = eval knowledge rulesList -- eval shortened
       applyOpe ope p1 p2 =
@@ -82,7 +90,7 @@ eval knowledge rulesList expr =
       And e1 e2  -> applyOpe (@+) (shortEval e1) (shortEval e2)
       Or e1 e2  -> applyOpe (@|) (shortEval e1) (shortEval e2)
       Xor e1 e2  -> applyOpe (@^) (shortEval e1) (shortEval e2)
-
+-}
 
 -- | Filter rules concerning the goal and resolve it
 searchFact :: Expr -> [FactState] -> [Relation] -> Either String ([FactState], State)
