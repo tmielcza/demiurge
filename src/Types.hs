@@ -81,24 +81,25 @@ instance Show Init where
 instance Show Query where
     show (Query facts) = "Query: "++ show facts
 
+
 (@+) :: State -> State -> State
 
 False @+ _ = False
 _ @+ False = False
 True @+ b = b
 a @+ True = a
-Unprovable a @+ Unsolved b = Unsolved (a `And` b)
-Unsolved a @+ Unprovable b = Unsolved (a `And` b)
-Unprovable a @+ Unprovable b
-  | a == Not b = False
-  | Not b == a = False
-  | a == b = Unprovable a
-  | otherwise = Unprovable (a `And` b)
-Unsolved a @+ Unsolved b
+Unprovable a @+ Unsolved b = compareExprInAnd Unsolved a b
+Unsolved a @+ Unprovable b = compareExprInAnd Unsolved a b
+Unprovable a @+ Unprovable b = compareExprInAnd Unprovable a b
+Unsolved a @+ Unsolved b = compareExprInAnd Unsolved a b
+
+compareExprInAnd :: (Expr -> State) -> Expr -> Expr -> State
+compareExprInAnd defaultconstructor a b
   | a == Not b = False
   | Not a == b = False
-  | a == b = Unsolved a
-  | otherwise = Unsolved (a `And` b)
+  | a == b = defaultconstructor a
+  | otherwise = defaultconstructor (a `And` b)
+
 
 (@|) :: State -> State -> State
 
@@ -106,18 +107,18 @@ True @| _ = True
 _ @| True = True
 False @| b = b
 a @| False = a
-Unprovable a @| Unsolved b = Unsolved (a `Or` b)
-Unsolved a @| Unprovable b = Unsolved (a `Or` b)
-Unprovable a @| Unprovable b
+Unprovable a @| Unsolved b = compareExprInOr Unsolved a b
+Unsolved a @| Unprovable b = compareExprInOr Unsolved a b
+Unprovable a @| Unprovable b = compareExprInOr Unprovable a b
+Unsolved a @| Unsolved b = compareExprInOr Unsolved a b
+
+compareExprInOr :: (Expr -> State) -> Expr -> Expr -> State
+compareExprInOr defaultconstructor a b
   | a == Not b = True
   | Not a == b = True
-  | a == b = Unprovable a
-  | otherwise = Unprovable (a `Or` b)
-Unsolved a @| Unsolved b
-  | a == Not b = True
-  | Not a == b = True
-  | a == b = Unsolved a
-  | otherwise = Unsolved (a `Or` b)
+  | a == b = defaultconstructor a
+  | otherwise = defaultconstructor (a `Or` b)
+
 
 not :: State -> State
 
