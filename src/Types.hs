@@ -188,5 +188,5 @@ foldExprM f (lhs `And` rhs) = do
   l <- foldExprM f lhs
   r <- foldExprM f rhs
   return (l @+ r)
-foldExprM f (Not e) = do {e' <- foldExprM f e; return e'}
+foldExprM f (Not e) = do {e' <- foldExprM f e; return (not e')}
 foldExprM f (Fact e) = f (Fact e)
