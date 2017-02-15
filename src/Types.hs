@@ -22,8 +22,8 @@ module Types
   exprToFactState
     ) where
 
-import Prelude hiding (Bool(..),not)
-import qualified Prelude (Bool(..))
+import Prelude hiding (Bool(..), not)
+import qualified Prelude (Bool(..), not)
 import Data.List
 
 -- | the type of expressions all constructors are recursives except Fact
@@ -86,7 +86,6 @@ instance Show Expr where
     show (And e1 e2) = "(" ++ show e1 ++ "+" ++ show e2 ++ ")"
     show (Fact c) = c
     show (Not e) = "!" ++ show e
-
 
 instance Show Relation where
     show (Imply e1 e2) = "{" ++ show e1 ++ "=>" ++ show e2 ++ "}"
