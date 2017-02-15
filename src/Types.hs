@@ -18,7 +18,8 @@ module Types
   mapSnd,
   foldExprM,
   Resolved(Resolved),
-  Logical
+  Logical,
+  exprToFactState
     ) where
 
 import Prelude hiding (Bool(..),not)
@@ -138,6 +139,11 @@ instance Logical Resolved where
     Resolved (lknowledge `union` rknowledge, lstate @^ rstate)
   not (Resolved (knowledge, state)) = Resolved (knowledge, not state)
 
+-- Functions of types
+
+exprToFactState :: Expr -> FactState
+exprToFactState (Not f) = (f, False)
+exprToFactState f = (f, True)
 
 mapSnd :: (b -> c) -> (a, b) -> (a, c)
 mapSnd f (a, b) = (a, f b)
