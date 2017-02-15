@@ -32,26 +32,37 @@ data Expr = Xor Expr Expr |
             Fact String |
             Not Expr
 
+data State = Unsolved Expr | True | False | Unprovable Expr
+  deriving (Show, Eq)
+
+-- | Association of an Expr (Mostly a Fact) to a State
+type FactState = (Expr, State)
+
+-- | The type of the relations between the Exprs. They form rules.
+data Relation = Eq Expr Expr | Imply Expr Expr
+
+-- | this type contains an Expr array. They are init Fact obtained by parsing.
+newtype Init = Init [FactState]
+
+-- | this type contains an Expr array. They are queries obtained by parsing.
+newtype Query = Query [Expr]
+
+-- | this type is used for resolution, it contains the knowledges first and then the state of the goal
+newtype Resolved = Resolved ([FactState], State)
+
 infixl 4 `Xor`
 infixl 5 `Or`
 infixl 6 `And`
 infixl 7 `Imply`
 infixl 8 `Eq`
 
--- | The type of the relations between the Exprs. They form rules.
-data Relation = Eq Expr Expr | Imply Expr Expr
+class Logical a where
+  (@|) :: a -> a -> a
+  (@+) :: a -> a -> a
+  not :: a -> a
 
--- | this type contains an Expr array. They are init Fact obtained by parsing.
-newtype Init = Init [Expr]
-
--- | this type contains an Expr array. They are queries obtained by parsing.
-newtype Query = Query [Expr]
-
--- | Used to browse and find he state of a fact, Unknown is manda
-data State = Unsolved Expr | True | False | Unprovable Expr
-  deriving (Show, Eq)
-
-type FactState = (Expr, State)
+  (@^) :: a -> a -> a
+  lhs @^ rhs = (lhs @| rhs) @+ not (lhs @+ rhs)
 
 instance Eq Expr where
     (And a1 b1) == (And a2 b2) = cmpBinaryExprSides a1 a2 b1 b2
@@ -75,12 +86,15 @@ instance Show Expr where
     show (Fact c) = c
     show (Not e) = "!" ++ show e
 
+
 instance Show Relation where
     show (Imply e1 e2) = "{" ++ show e1 ++ "=>" ++ show e2 ++ "}"
     show (Eq e1 e2) = "{" ++ show e1 ++ "<=>" ++ show e2 ++ "}"
 
+
 instance Show Init where
     show (Init facts) = "Init: "++ show facts
+
 
 instance Show Query where
     show (Query facts) = "Query: "++ show facts
@@ -107,8 +121,6 @@ instance Logical State where
   Unprovable a @| Unprovable b = compareExprInOr Unprovable a b
   Unsolved a @| Unsolved b = compareExprInOr Unsolved a b
 
--- not :: State -> State
-
   not True = False
   not False = True
   not (Unprovable (Not a)) = Unprovable a
@@ -116,26 +128,26 @@ instance Logical State where
   not (Unsolved (Not a)) = Unsolved a
   not (Unsolved a) = Unsolved (Not a)
 
---(@^) :: State -> State -> State
---a @^ b = (a @| b) @+ not (a @+ b)
+
+instance Logical Resolved where
+  Resolved (lknowledge, lstate) @+ Resolved (rknowledge, rstate) =
+    Resolved (lknowledge `union` rknowledge, lstate @+ rstate)
+  Resolved (lknowledge, lstate) @| Resolved (rknowledge, rstate) =
+    Resolved (lknowledge `union` rknowledge, lstate @| rstate)
+  Resolved (lknowledge, lstate) @^ Resolved (rknowledge, rstate) =
+    Resolved (lknowledge `union` rknowledge, lstate @^ rstate)
+  not (Resolved (knowledge, state)) = Resolved (knowledge, not state)
+
 
 mapSnd :: (b -> c) -> (a, b) -> (a, c)
 mapSnd f (a, b) = (a, f b)
 
+displayEitherFactStates :: Either String [FactState] -> IO ()
 displayEitherFactStates (Right [(fact, status)] ) = print (show fact ++" is "++ show status)
 displayEitherFactStates (Right((fact, status):rs)) = do
   print (show fact ++" is "++ show status)
   displayEitherFactStates (Right rs)
 displayEitherFactStates (Left err) = print $ "Error : " ++ show err
-
-
-class Logical a where
-  (@|) :: a -> a -> a
-  (@+) :: a -> a -> a
-  not :: a -> a
-
-  (@^) :: a -> a -> a
-  lhs @^ rhs = (lhs @| rhs) @+ not (lhs @+ rhs)
 
 foldExpr :: Logical a => (Expr -> a) -> Expr -> a
 foldExpr f (lhs `Xor` rhs) = (foldExpr f lhs) @^ (foldExpr f rhs)
@@ -156,18 +168,6 @@ compareExprInOr defaultconstructor a b
   | Not a == b = True
   | a == b = defaultconstructor a
   | otherwise = defaultconstructor (a `Or` b)
-
-newtype Resolved = Resolved ([FactState], State)
-
-instance Logical Resolved where
-  Resolved (lknowledge, lstate) @+ Resolved (rknowledge, rstate) =
-    Resolved (lknowledge `union` rknowledge, lstate @+ rstate)
-  Resolved (lknowledge, lstate) @| Resolved (rknowledge, rstate) =
-    Resolved (lknowledge `union` rknowledge, lstate @| rstate)
-  Resolved (lknowledge, lstate) @^ Resolved (rknowledge, rstate) =
-    Resolved (lknowledge `union` rknowledge, lstate @^ rstate)
-  not (Resolved (knowledge, state)) = Resolved (knowledge, not state)
-
 
 foldExprM :: (Monad m, Logical a) => (Expr -> m a) -> Expr -> m a
 foldExprM f (lhs `Xor` rhs) = do
