@@ -23,6 +23,7 @@ module Types
 
 import Prelude hiding (Bool(..),not)
 import qualified Prelude (Bool(..))
+import Data.List
 
 -- | the type of expressions all constructors are recursives except Fact
 data Expr = Xor Expr Expr |
@@ -160,11 +161,11 @@ newtype Resolved = Resolved ([FactState], State)
 
 instance Logical Resolved where
   Resolved (lknowledge, lstate) @+ Resolved (rknowledge, rstate) =
-    Resolved (lknowledge ++ rknowledge, lstate @+ rstate)
+    Resolved (lknowledge `union` rknowledge, lstate @+ rstate)
   Resolved (lknowledge, lstate) @| Resolved (rknowledge, rstate) =
-    Resolved (lknowledge ++ rknowledge, lstate @| rstate)
+    Resolved (lknowledge `union` rknowledge, lstate @| rstate)
   Resolved (lknowledge, lstate) @^ Resolved (rknowledge, rstate) =
-    Resolved (lknowledge ++ rknowledge, lstate @^ rstate)
+    Resolved (lknowledge `union` rknowledge, lstate @^ rstate)
   not (Resolved (knowledge, state)) = Resolved (knowledge, not state)
 
 
