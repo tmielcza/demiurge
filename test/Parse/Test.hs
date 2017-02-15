@@ -89,19 +89,19 @@ parseSuite = testGroup "Parsing tests"
                  relationListTest "A => B" "[{A=>B}]",
                  relationListErrorTest ""
                ],
-               testGroup "Queries"
+               testGroup "Initial Facts"
                [
-                 initTest "=ABCD" "Init: [A,B,C,D]",
-                 initTest "= A    BC D" "Init: [A,B,C,D]",
-                 initTest "= A!BC" "Init: [A,!B,C]",
+                 initTest "=ABCD" "Init: [(A,True),(B,True),(C,True),(D,True)]",
+                 initTest "= A    BC D" "Init: [(A,True),(B,True),(C,True),(D,True)]",
+                 initTest "= A!BC" "Init: [(A,True),(B,False),(C,True)]",
                  initTest "=" "Init: []",
-                 initTest "=It_s_a_factThis_too" "Init: [It_s_a_fact,This_too]",
+                 initTest "=It_s_a_factThis_too" "Init: [(It_s_a_fact,True),(This_too,True)]",
                  initErrorTest "=+",
                  initErrorTest "=ABC+R",
                  initErrorTest "=A(BCR)",
                  initErrorTest ""
                ],
-               testGroup "Initial Facts"
+               testGroup "Queries"
                [
                  queryTest "?PON" "Query: [P,O,N]",
                  queryTest "?   P  O N" "Query: [P,O,N]",
