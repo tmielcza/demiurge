@@ -27,10 +27,9 @@ combineStates s1 s2
 resolveRules :: [Relation] -> [Relation] -> [FactState] -> Expr -> Either String Resolved
 resolveRules concernedRules rules knowledge goal =
   let
-    mapResolvedState f (Resolved (a, b)) = Resolved (a, f b)
     evalGoal :: Resolved -> Relation -> Either String Resolved
-    evalGoal (Resolved (knowledge', state)) (lhs `Imply` rhs) = do
-        Resolved (knowledge'', state') <- (specialCase rhs `mapResolvedState`) <$> eval rules knowledge' lhs
+    evalGoal (Resolved (knowledge', state)) relation = do
+        Resolved (knowledge'', state') <- eval rules knowledge' relation
         (Resolved . ((,) knowledge'')) <$> combineStates state state'
   in
     foldlM (\k r -> evalGoal k r) (Resolved ((goal, Unsolved goal):knowledge, Unsolved goal)) concernedRules
@@ -63,11 +62,13 @@ resolveFact rules knowledge subgoal =
     Just st -> Right (Resolved (knowledge, st))
     Nothing -> searchFact rules knowledge subgoal
 
--- | the function that evaluate an Expression
-eval :: [Relation] -> [FactState] -> Expr -> Either String Resolved
-eval rulesList knowledge expr = do
-  foldExprM (resolveFact rulesList knowledge) expr
 
+-- | the function that evaluate an Expression
+eval :: [Relation] -> [FactState] -> Relation -> Either String Resolved
+eval rulesList knowledge (lhs `Imply` rhs) = do
+  Resolved (k, s) <- foldExprM (resolveFact rulesList knowledge) lhs
+  return (Resolved (k, specialCase rhs s))
+eval _ _ _ = error "Unreachable Code"
 
 -- | Filter rules concerning the goal and resolve it
 searchFact :: [Relation] -> [FactState] -> Expr -> Either String Resolved
