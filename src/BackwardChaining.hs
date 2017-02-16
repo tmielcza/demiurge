@@ -1,6 +1,6 @@
 module BackwardChaining
 (
-  launchResolution
+  loopOnQuery
     ) where
 
 import Types
@@ -21,19 +21,20 @@ combineStates s1 s2
     | s1 == s2 = Right s1
     | otherwise = Left "Incoherent rules and/or initial facts"
 
-combinePair :: Either String ([FactState], State) -> Either String ([FactState], State) -> Either String ([FactState], State)
+combinePair :: Either String Resolved -> Either String Resolved -> Either String Resolved
 combinePair p1 p2 = do
-  (k1, s1) <- p1
-  (k2, s2) <- p2
-  ((,) $ k1 ++ k2) <$> combineStates s1 s2
+  Resolved (k1, s1) <- p1
+  Resolved (k2, s2) <- p2
+  (Resolved . ((,) $ k1 ++ k2)) <$> combineStates s1 s2
 
 -- | loop that check the coherence of results
-resolveRules :: [Relation] -> [Relation] -> [FactState] ->  Either String ([FactState], State)
-resolveRules [] _ knowledge = Right (knowledge, (snd . head) knowledge)
+resolveRules :: [Relation] -> [Relation] -> [FactState] ->  Either String Resolved
+resolveRules [] _ knowledge = Right (Resolved (knowledge, (snd . head) knowledge))
 resolveRules concernedRules rules knowledge =
   let
-    evalGoal :: Relation -> Either String ([FactState], State)
-    evalGoal (lhs `Imply` rhs) = (specialCase rhs `mapSnd`) <$> eval knowledge rules lhs
+    mapResolvedState f (Resolved (a, b)) = Resolved (a, f b)
+    evalGoal :: Relation -> Either String Resolved
+    evalGoal (lhs `Imply` rhs) = (specialCase rhs `mapResolvedState`) <$> eval knowledge rules lhs
     evalGoal _ = error "Unreachable code"
   in
   (foldl1 combinePair . map evalGoal) concernedRules
@@ -60,60 +61,38 @@ specialCase rhs Types.False = Unsolved rhs -- problem expr dans rhs
 specialCase _ state = state
 
 -- | Look for q fact in the knowledge or search it with the rules
-resolveFact :: Expr -> [FactState] -> [Relation] -> Either String ([FactState], State)
-resolveFact subgoal knowledge rules =
+resolveFact :: [FactState] -> [Relation] -> Expr -> Either String Resolved
+resolveFact knowledge rules subgoal =
   case lookup subgoal knowledge of
-    Just st -> Right ([], st)
+    Just st -> Right (Resolved ([], st))
     Nothing  -> searchFact subgoal knowledge rules
 
-resolveFact' k r e = resolveFact e k r
-
 -- | the function that evaluate an Expression
-eval :: [FactState] -> [Relation] -> Expr -> Either String ([FactState], State)
+eval :: [FactState] -> [Relation] -> Expr -> Either String Resolved
 
 eval knowledge rulesList expr = do
-  (Resolved r) <- foldExprM ((Resolved <$>) . resolveFact' knowledge rulesList) expr
-  return r
+  foldExprM (resolveFact knowledge rulesList) expr
 
-
--- Should knowledge be updated between evaluations ?
-{-
-eval knowledge rulesList expr =
-  let shortEval = eval knowledge rulesList -- eval shortened
-      applyOpe ope p1 p2 =
-        do
-          (k1, st1) <- p1
-          (k2, st2) <- p2
-          return (k1 ++ k2, st1 `ope` st2) -- gather the pair concatening the left list and applying the ope on the right States
-      applyNot p1 = do { (k, st) <- p1; return (k, not st) }
-  in case expr of
-      fact@(Fact _) -> resolveFact fact knowledge rulesList
-      Not e -> applyNot (shortEval e)
-      And e1 e2  -> applyOpe (@+) (shortEval e1) (shortEval e2)
-      Or e1 e2  -> applyOpe (@|) (shortEval e1) (shortEval e2)
-      Xor e1 e2  -> applyOpe (@^) (shortEval e1) (shortEval e2)
--}
 
 -- | Filter rules concerning the goal and resolve it
-searchFact :: Expr -> [FactState] -> [Relation] -> Either String ([FactState], State)
+searchFact :: Expr -> [FactState] -> [Relation] -> Either String Resolved
 searchFact goal knowledge rules =
   let
     concernedRules = inferRules rules goal
     searchKnown = (goal, Unsolved goal):knowledge -- We set our goal at Unsolved to avoid looping on it
-    result = resolveRules concernedRules rules searchKnown
-  in case result of
-    Left err -> Left err
-    Right (newknown, Unsolved _) -> Right ((goal, Types.False):newknown, Types.False)
-    Right (newknown, goalState) -> Right ((goal, goalState):newknown, goalState)
+  in do
+    r <- resolveRules concernedRules rules searchKnown
+    case r of
+      Resolved (newknown, Unsolved _) -> return (Resolved ((goal, Types.False):newknown, Types.False))
+      Resolved (newknown, goalState) -> return (Resolved ((goal, goalState):newknown, goalState))
 
--- | function called with the result of file parsing to start resolution
-launchResolution :: ([Relation], Init, Query) -> Either String [FactState]
-launchResolution (rules, Init knowledge, Query query) =
-  loopOnQuery rules query knowledge
 
 -- | loop the resolution on each query sent
-loopOnQuery :: [Relation] -> [Expr] -> [FactState] -> Either String [FactState]
-loopOnQuery rules (query:queries) knowledge = do
-      (newKnowledge, result) <- resolveFact query knowledge rules
-      (:)(query, result) <$> loopOnQuery rules queries (knowledge ++ newKnowledge)
-loopOnQuery _ [] _ = return []
+loopOnQuery :: ([Relation], Init, Query) -> Either String [FactState]
+loopOnQuery (rules, knowledge, (query:queries)) = do
+  Resolved (newKnowledge, result) <- resolveFact knowledge rules query
+  (:)(query, result) <$> loopOnQuery (rules, (knowledge ++ newKnowledge), queries)
+
+loopOnQuery (_, _, []) = return []
+
+--loopOnQuery (rules, knowledge, queries) = foldlM (resolveFact rules) knowledge queries

@@ -91,11 +91,11 @@ parseSuite = testGroup "Parsing tests"
                ],
                testGroup "Initial Facts"
                [
-                 initTest "=ABCD" "Init: [(A,True),(B,True),(C,True),(D,True)]",
-                 initTest "= A    BC D" "Init: [(A,True),(B,True),(C,True),(D,True)]",
-                 initTest "= A!BC" "Init: [(A,True),(B,False),(C,True)]",
-                 initTest "=" "Init: []",
-                 initTest "=It_s_a_factThis_too" "Init: [(It_s_a_fact,True),(This_too,True)]",
+                 initTest "=ABCD" "[(A,True),(B,True),(C,True),(D,True)]",
+                 initTest "= A    BC D" "[(A,True),(B,True),(C,True),(D,True)]",
+                 initTest "= A!BC" "[(A,True),(B,False),(C,True)]",
+                 initTest "=" "[]",
+                 initTest "=It_s_a_factThis_too" "[(It_s_a_fact,True),(This_too,True)]",
                  initErrorTest "=+",
                  initErrorTest "=ABC+R",
                  initErrorTest "=A(BCR)",
@@ -103,9 +103,9 @@ parseSuite = testGroup "Parsing tests"
                ],
                testGroup "Queries"
                [
-                 queryTest "?PON" "Query: [P,O,N]",
-                 queryTest "?   P  O N" "Query: [P,O,N]",
-                 queryTest "?Today_s_the_dayNo_means_no" "Query: [Today_s_the_day,No_means_no]",
+                 queryTest "?PON" "[P,O,N]",
+                 queryTest "?   P  O N" "[P,O,N]",
+                 queryTest "?Today_s_the_dayNo_means_no" "[Today_s_the_day,No_means_no]",
                  queryErrorTest "?|",
                  queryErrorTest "?",
                  queryErrorTest "?@",

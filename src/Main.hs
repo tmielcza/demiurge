@@ -10,7 +10,3 @@ main = do
     interactiveMode (args !! 1)
   else
     print "ExpertSystem needs an argument"
-
-
-
-

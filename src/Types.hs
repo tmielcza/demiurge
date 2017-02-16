@@ -10,8 +10,8 @@ module Types
 (
   Expr(Xor, Or, And, Fact, Not),
   Relation(Eq, Imply),
-  Init(Init),
-  Query(Query),
+  Init,
+  Query,
   State(..),
   not, (@+), (@|), (@^),
   FactState,
@@ -19,7 +19,8 @@ module Types
   foldExprM,
   Resolved(Resolved),
   Logical,
-  exprToFactState
+  exprToFactState,
+  resolved
     ) where
 
 import Prelude hiding (Bool(..), not)
@@ -43,10 +44,10 @@ type FactState = (Expr, State)
 data Relation = Eq Expr Expr | Imply Expr Expr
 
 -- | this type contains an Expr array. They are init Fact obtained by parsing.
-newtype Init = Init [FactState]
+type Init = [FactState]
 
 -- | this type contains an Expr array. They are queries obtained by parsing.
-newtype Query = Query [Expr]
+type Query = [Expr]
 
 -- | this type is used for resolution, it contains the knowledges first and then the state of the goal
 newtype Resolved = Resolved ([FactState], State)
@@ -90,15 +91,6 @@ instance Show Expr where
 instance Show Relation where
     show (Imply e1 e2) = "{" ++ show e1 ++ "=>" ++ show e2 ++ "}"
     show (Eq e1 e2) = "{" ++ show e1 ++ "<=>" ++ show e2 ++ "}"
-
-
-instance Show Init where
-    show (Init facts) = "Init: "++ show facts
-
-
-instance Show Query where
-    show (Query facts) = "Query: "++ show facts
-
 
 instance Logical State where
 
@@ -189,3 +181,6 @@ foldExprM f (lhs `And` rhs) = do
   return (l @+ r)
 foldExprM f (Not e) = do {e' <- foldExprM f e; return (not e')}
 foldExprM f (Fact e) = f (Fact e)
+
+resolved :: Resolved -> ([FactState], State)
+resolved (Resolved r) = r
