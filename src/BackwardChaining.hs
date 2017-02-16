@@ -22,23 +22,18 @@ combineStates s1 s2
     | s1 == s2 = Right s1
     | otherwise = Left "Incoherent rules and/or initial facts"
 
-combinePair :: Either String Resolved -> Either String Resolved -> Either String Resolved
-combinePair p1 p2 = do
-  Resolved (k1, s1) <- p1
-  Resolved (k2, s2) <- p2
-  (Resolved . ((,) $ k1 ++ k2)) <$> combineStates s1 s2
 
 -- | loop that check the coherence of results
-resolveRules :: [Relation] -> [Relation] -> [FactState] ->  Either String Resolved
-resolveRules [] _ knowledge = Right (Resolved (knowledge, (snd . head) knowledge))
-resolveRules concernedRules rules knowledge =
+resolveRules :: [Relation] -> [Relation] -> [FactState] -> Expr -> Either String Resolved
+resolveRules concernedRules rules knowledge goal =
   let
     mapResolvedState f (Resolved (a, b)) = Resolved (a, f b)
-    evalGoal :: Relation -> Either String Resolved
-    evalGoal (lhs `Imply` rhs) = (specialCase rhs `mapResolvedState`) <$> eval rules knowledge lhs
-    evalGoal _ = error "Unreachable code"
+    evalGoal :: Resolved -> Relation -> Either String Resolved
+    evalGoal (Resolved (knowledge', state)) (lhs `Imply` rhs) = do
+        Resolved (knowledge'', state') <- (specialCase rhs `mapResolvedState`) <$> eval rules knowledge' lhs
+        (Resolved . ((,) knowledge'')) <$> combineStates state state'
   in
-  (foldl1 combinePair . map evalGoal) concernedRules
+    foldlM (\k r -> evalGoal k r) (Resolved ((goal, Unsolved goal):knowledge, Unsolved goal)) concernedRules
 
 
 conjunctionContainsInverseExpr :: Expr -> Expr -> Bool
@@ -81,7 +76,7 @@ searchFact rules knowledge goal =
     concernedRules = inferRules rules goal
     searchKnown = (goal, Unsolved goal):knowledge -- We set our goal at Unsolved to avoid looping on it
   in do
-    r <- resolveRules concernedRules rules searchKnown
+    r <- resolveRules concernedRules rules searchKnown goal
     case r of
       Resolved (newknown, Unsolved _) -> return (Resolved ((goal, Types.False):newknown, Types.False))
       Resolved (newknown, goalState) -> return (Resolved ((goal, goalState):newknown, goalState))
