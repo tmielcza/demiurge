@@ -6,6 +6,7 @@ module BackwardChaining
 import Types
 import Inference
 import Prelude hiding ( not)
+import Data.Foldable
 
 combineStates :: State -> State -> Either String State
 combineStates (Unsolved a) (Unsolved b) = Right (Unsolved a @| Unsolved b)
@@ -34,7 +35,7 @@ resolveRules concernedRules rules knowledge =
   let
     mapResolvedState f (Resolved (a, b)) = Resolved (a, f b)
     evalGoal :: Relation -> Either String Resolved
-    evalGoal (lhs `Imply` rhs) = (specialCase rhs `mapResolvedState`) <$> eval knowledge rules lhs
+    evalGoal (lhs `Imply` rhs) = (specialCase rhs `mapResolvedState`) <$> eval rules knowledge lhs
     evalGoal _ = error "Unreachable code"
   in
   (foldl1 combinePair . map evalGoal) concernedRules
@@ -61,22 +62,21 @@ specialCase rhs Types.False = Unsolved rhs -- problem expr dans rhs
 specialCase _ state = state
 
 -- | Look for q fact in the knowledge or search it with the rules
-resolveFact :: [FactState] -> [Relation] -> Expr -> Either String Resolved
-resolveFact knowledge rules subgoal =
+resolveFact :: [Relation] -> [FactState] -> Expr -> Either String Resolved
+resolveFact rules knowledge subgoal =
   case lookup subgoal knowledge of
-    Just st -> Right (Resolved ([], st))
-    Nothing  -> searchFact subgoal knowledge rules
+    Just st -> Right (Resolved (knowledge, st))
+    Nothing -> searchFact rules knowledge subgoal
 
 -- | the function that evaluate an Expression
-eval :: [FactState] -> [Relation] -> Expr -> Either String Resolved
-
-eval knowledge rulesList expr = do
-  foldExprM (resolveFact knowledge rulesList) expr
+eval :: [Relation] -> [FactState] -> Expr -> Either String Resolved
+eval rulesList knowledge expr = do
+  foldExprM (resolveFact rulesList knowledge) expr
 
 
 -- | Filter rules concerning the goal and resolve it
-searchFact :: Expr -> [FactState] -> [Relation] -> Either String Resolved
-searchFact goal knowledge rules =
+searchFact :: [Relation] -> [FactState] -> Expr -> Either String Resolved
+searchFact rules knowledge goal =
   let
     concernedRules = inferRules rules goal
     searchKnown = (goal, Unsolved goal):knowledge -- We set our goal at Unsolved to avoid looping on it
@@ -89,10 +89,5 @@ searchFact goal knowledge rules =
 
 -- | loop the resolution on each query sent
 loopOnQuery :: ([Relation], Init, Query) -> Either String [FactState]
-loopOnQuery (rules, knowledge, (query:queries)) = do
-  Resolved (newKnowledge, result) <- resolveFact knowledge rules query
-  (:)(query, result) <$> loopOnQuery (rules, (knowledge ++ newKnowledge), queries)
-
-loopOnQuery (_, _, []) = return []
-
---loopOnQuery (rules, knowledge, queries) = foldlM (resolveFact rules) knowledge queries
+loopOnQuery (rules, knowledge, queries) =
+  foldlM (\k e -> fmap resolvedKnowledge (resolveFact rules k e)) knowledge queries

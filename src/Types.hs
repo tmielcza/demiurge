@@ -20,7 +20,8 @@ module Types
   Resolved(Resolved),
   Logical,
   exprToFactState,
-  resolved
+  resolved,
+  resolvedKnowledge
     ) where
 
 import Prelude hiding (Bool(..), not)
@@ -184,3 +185,6 @@ foldExprM f (Fact e) = f (Fact e)
 
 resolved :: Resolved -> ([FactState], State)
 resolved (Resolved r) = r
+
+resolvedKnowledge :: Resolved -> [FactState]
+resolvedKnowledge = fst . resolved
