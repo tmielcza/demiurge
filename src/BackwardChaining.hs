@@ -1,6 +1,6 @@
 module BackwardChaining
 (
-  loopOnQuery
+  resolveQueries
     ) where
 
 import Types
@@ -88,6 +88,6 @@ searchFact rules knowledge goal =
 
 
 -- | loop the resolution on each query sent
-loopOnQuery :: ([Relation], Init, Query) -> Either String [FactState]
-loopOnQuery (rules, knowledge, queries) =
+resolveQueries :: ([Relation], Init, Query) -> Either String [FactState]
+resolveQueries (rules, knowledge, queries) =
   foldlM (\k e -> fmap resolvedKnowledge (resolveFact rules k e)) knowledge queries
