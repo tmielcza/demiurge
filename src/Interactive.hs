@@ -1,7 +1,7 @@
 module Interactive where
 
 import Parse(parseInit, parseQuery)
-import BackwardChaining(resolveQueries)
+import BackwardChaining(getStateOfQueries)
 import Types
 import Data.List()
 import System.IO
@@ -50,7 +50,7 @@ readEntry (r, i, q) line =
 promptAddData :: Either String ([Relation], Init, Query) -> IO()
 promptAddData (Right triple) = do
   datas <- prompt triple
-  print (datas >>= resolveQueries)
+  print (datas >>= getStateOfQueries)
   return ()
 
 promptAddData _ = print "your previous file was incorrect, impossible to launch the interactive mode"

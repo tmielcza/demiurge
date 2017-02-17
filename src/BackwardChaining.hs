@@ -1,6 +1,6 @@
 module BackwardChaining
 (
-  resolveQueries
+  getStateOfQueries
     ) where
 
 import Types
@@ -80,6 +80,10 @@ searchFact rules knowledge goal = do
     Resolved (newknown, Unsolved _) -> return (Resolved ((goal, Types.False):newknown, Types.False))
     Resolved (newknown, goalState) -> return (Resolved ((goal, goalState):newknown, goalState))
 
+getStateOfQueries :: ([Relation], Init, Query) -> Either String [FactState]
+getStateOfQueries triple@(_, _, queries) = do
+  collectedKnowledge <- resolveQueries triple
+  return (filter (\(fact, state) -> elem fact queries) collectedKnowledge)
 
 -- | loop the resolution on each query sent
 resolveQueries :: ([Relation], Init, Query) -> Either String [FactState]
