@@ -8,6 +8,7 @@ import Inference
 import Prelude hiding ( not)
 import Data.Foldable
 
+
 combineStates :: State -> State -> Either String State
 combineStates (Unsolved a) (Unsolved b) = Right (Unsolved a @| Unsolved b)
 combineStates (Unsolved a) (Unprovable b) = Right (Unsolved a @| Unprovable b)
@@ -29,11 +30,11 @@ resolveRules rules knowledge goal =
   let
     concernedRules = inferRules rules goal
     evalGoal :: Resolved -> Relation -> Either String Resolved
-    evalGoal (Resolved (knowledge', state)) relation = do
-        Resolved (knowledge'', state') <- eval rules knowledge' relation
-        (Resolved . ((,) knowledge'')) <$> combineStates state state'
+    evalGoal ((knowledge', state)) relation = do
+        (knowledge'', state') <- eval rules knowledge' relation
+        (((,) knowledge'')) <$> combineStates state state'
   in
-    foldlM (\k r -> evalGoal k r) (Resolved ((goal, Unsolved goal):knowledge, Unsolved goal)) concernedRules
+    foldlM (\k r -> evalGoal k r) (((goal, Unsolved goal):knowledge, Unsolved goal)) concernedRules
 
 
 conjunctionContainsInverseExpr :: Expr -> Expr -> Bool
@@ -61,15 +62,15 @@ specialCase _ state = state
 resolveFact :: [Relation] -> [FactState] -> Expr -> Either String Resolved
 resolveFact rules knowledge subgoal =
   case lookup subgoal knowledge of
-    Just st -> Right (Resolved (knowledge, st))
+    Just st -> Right (knowledge, st)
     Nothing -> searchFact rules knowledge subgoal
 
 
 -- | the function that evaluate an Expression
 eval :: [Relation] -> [FactState] -> Relation -> Either String Resolved
 eval rulesList knowledge (lhs `Imply` rhs) = do
-  Resolved (k, s) <- foldExprM (resolveFact rulesList knowledge) lhs
-  return (Resolved (k, specialCase rhs s))
+  (k, s) <- foldExprM (resolveFact rulesList knowledge) lhs
+  return (k, specialCase rhs s)
 eval _ _ _ = error "Unreachable Code"
 
 -- | Filter rules concerning the goal and resolve it
@@ -77,8 +78,8 @@ searchFact :: [Relation] -> [FactState] -> Expr -> Either String Resolved
 searchFact rules knowledge goal = do
   r <- resolveRules rules knowledge goal
   case r of
-    Resolved (newknown, Unsolved _) -> return (Resolved ((goal, Types.False):newknown, Types.False))
-    Resolved (newknown, goalState) -> return (Resolved ((goal, goalState):newknown, goalState))
+    (newknown, Unsolved _) -> return ((goal, Types.False):newknown, Types.False)
+    (newknown, goalState) -> return ((goal, goalState):newknown, goalState)
 
 getStateOfQueries :: ([Relation], Init, Query) -> Either String [FactState]
 getStateOfQueries triple@(_, _, queries) = do
@@ -88,4 +89,4 @@ getStateOfQueries triple@(_, _, queries) = do
 -- | loop the resolution on each query sent
 resolveQueries :: ([Relation], Init, Query) -> Either String [FactState]
 resolveQueries (rules, knowledge, queries) =
-  foldlM (\k e -> fmap resolvedKnowledge (resolveFact rules k e)) knowledge queries
+  foldlM (\k e -> fmap fst (resolveFact rules k e)) knowledge queries

@@ -6,6 +6,7 @@
 -- Types returned by parsing and used for Resolution
 --
 -----------------------------------------------------------------------------
+{-# LANGUAGE FlexibleInstances #-}
 module Types
 (
   Expr(Xor, Or, And, Fact, Not),
@@ -17,12 +18,12 @@ module Types
   FactState,
   mapSnd,
   foldExprM,
-  Resolved(Resolved),
+  Resolved,
   Logical,
-  exprToFactState,
-  resolved,
-  resolvedKnowledge
+  exprToFactState
     ) where
+
+
 
 import Prelude hiding (Bool(..), not)
 import qualified Prelude (Bool(..), not)
@@ -51,7 +52,7 @@ type Init = [FactState]
 type Query = [Expr]
 
 -- | this type is used for resolution, it contains the knowledges first and then the state of the goal
-newtype Resolved = Resolved ([FactState], State)
+type Resolved = ([FactState], State)
 
 infixl 4 `Xor`
 infixl 5 `Or`
@@ -122,14 +123,15 @@ instance Logical State where
   not (Unsolved a) = Unsolved (Not a)
 
 
+
 instance Logical Resolved where
-  Resolved (lknowledge, lstate) @+ Resolved (rknowledge, rstate) =
-    Resolved (lknowledge `union` rknowledge, lstate @+ rstate)
-  Resolved (lknowledge, lstate) @| Resolved (rknowledge, rstate) =
-    Resolved (lknowledge `union` rknowledge, lstate @| rstate)
-  Resolved (lknowledge, lstate) @^ Resolved (rknowledge, rstate) =
-    Resolved (lknowledge `union` rknowledge, lstate @^ rstate)
-  not (Resolved (knowledge, state)) = Resolved (knowledge, not state)
+  (lknowledge, lstate) @+ (rknowledge, rstate) =
+    (lknowledge `union` rknowledge, lstate @+ rstate)
+  (lknowledge, lstate) @| (rknowledge, rstate) =
+    (lknowledge `union` rknowledge, lstate @| rstate)
+  (lknowledge, lstate) @^ (rknowledge, rstate) =
+    (lknowledge `union` rknowledge, lstate @^ rstate)
+  not ((knowledge, state)) = (knowledge, not state)
 
 -- Functions of types
 
@@ -182,9 +184,3 @@ foldExprM f (lhs `And` rhs) = do
   return (l @+ r)
 foldExprM f (Not e) = do {e' <- foldExprM f e; return (not e')}
 foldExprM f (Fact e) = f (Fact e)
-
-resolved :: Resolved -> ([FactState], State)
-resolved (Resolved r) = r
-
-resolvedKnowledge :: Resolved -> [FactState]
-resolvedKnowledge = fst . resolved
