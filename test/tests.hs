@@ -5,5 +5,5 @@ import Test.Framework (defaultMain)
 import Parse.Test
 import ReadAndResolve.Test
 
-main = defaultMain [parseSuite, fileSuite]
+main = defaultMain [ fileSuite]
 
