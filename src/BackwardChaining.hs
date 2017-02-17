@@ -53,6 +53,7 @@ specialCase rhs  (Unsolved (Not expr))
 specialCase rhs  (Unsolved expr)
   | conjunctionContainsInverseExpr rhs expr = Unprovable expr
 specialCase (Not _) Types.True = Types.False
+specialCase (Not rhs) Types.False = Unsolved rhs
 specialCase rhs Types.False = Unsolved rhs -- problem expr dans rhs
 specialCase _ state = state
 
