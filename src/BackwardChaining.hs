@@ -24,9 +24,10 @@ combineStates s1 s2
 
 
 -- | loop that check the coherence of results
-resolveRules :: [Relation] -> [Relation] -> [FactState] -> Expr -> Either String Resolved
-resolveRules concernedRules rules knowledge goal =
+resolveRules :: [Relation] -> [FactState] -> Expr -> Either String Resolved
+resolveRules rules knowledge goal =
   let
+    concernedRules = inferRules rules goal
     evalGoal :: Resolved -> Relation -> Either String Resolved
     evalGoal (Resolved (knowledge', state)) relation = do
         Resolved (knowledge'', state') <- eval rules knowledge' relation
@@ -72,15 +73,11 @@ eval _ _ _ = error "Unreachable Code"
 
 -- | Filter rules concerning the goal and resolve it
 searchFact :: [Relation] -> [FactState] -> Expr -> Either String Resolved
-searchFact rules knowledge goal =
-  let
-    concernedRules = inferRules rules goal
-    searchKnown = (goal, Unsolved goal):knowledge -- We set our goal at Unsolved to avoid looping on it
-  in do
-    r <- resolveRules concernedRules rules searchKnown goal
-    case r of
-      Resolved (newknown, Unsolved _) -> return (Resolved ((goal, Types.False):newknown, Types.False))
-      Resolved (newknown, goalState) -> return (Resolved ((goal, goalState):newknown, goalState))
+searchFact rules knowledge goal = do
+  r <- resolveRules rules knowledge goal
+  case r of
+    Resolved (newknown, Unsolved _) -> return (Resolved ((goal, Types.False):newknown, Types.False))
+    Resolved (newknown, goalState) -> return (Resolved ((goal, goalState):newknown, goalState))
 
 
 -- | loop the resolution on each query sent
