@@ -35,7 +35,7 @@ infer (premices `Imply` Not (lhs `Xor` rhs)) goal =
 -- return the rule sent if the rhs is the fact we are looking for
 infer r@(_ `Imply` fact) goal
   | goal == fact = [r]
-  | Not goal == fact = [r]
+ -- | Not goal == fact = [r]
   | otherwise    = []
 
 --modus tollens or transposition

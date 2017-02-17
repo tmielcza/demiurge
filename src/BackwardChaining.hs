@@ -7,6 +7,7 @@ import Types
 import Inference
 import Prelude hiding ( not)
 import Data.Foldable
+import Debug.Trace
 
 
 combineStates :: State -> State -> Either String State
@@ -29,12 +30,12 @@ resolveRules :: [Relation] -> [FactState] -> Expr -> Either String Resolved
 resolveRules rules knowledge goal =
   let
     concernedRules = inferRules rules goal
-    evalGoal :: Resolved -> Relation -> Either String Resolved
-    evalGoal ((knowledge', state)) relation = do
+    evalRule :: Resolved -> Relation -> Either String Resolved
+    evalRule ((knowledge', state)) relation = do
         (knowledge'', state') <- eval rules knowledge' relation
-        (((,) knowledge'')) <$> combineStates state state'
+        return (knowledge'', state @| state')
   in
-    foldlM (\k r -> evalGoal k r) (((goal, Unsolved goal):knowledge, Unsolved goal)) concernedRules
+    foldlM evalRule (((goal, Unsolved goal):knowledge, Unsolved goal)) concernedRules
 
 
 conjunctionContainsInverseExpr :: Expr -> Expr -> Bool
@@ -46,14 +47,14 @@ conjunctionContainsInverseExpr goal expr = goal == Not expr || Not goal == expr
 specialCase :: Expr -> State -> State
 specialCase (Not rhs)  (Unsolved expr)
   | conjunctionContainsInverseExpr (Not rhs) expr = Unsolved expr -- Q: When is it run ?
-  | expr == rhs = Types.False -- a => !a
+  | expr == rhs = Types.True -- a => !a
   | otherwise =  Unsolved expr
 specialCase rhs  (Unsolved (Not expr))
   | expr == rhs = Types.True -- !a => a
   | otherwise =  Unprovable (Not expr) -- !b => a
 specialCase rhs  (Unsolved expr)
   | conjunctionContainsInverseExpr rhs expr = Unprovable expr
-specialCase (Not _) Types.True = Types.False
+specialCase (Not _) Types.True = Types.True
 specialCase (Not rhs) Types.False = Unsolved rhs
 specialCase rhs Types.False = Unsolved rhs -- problem expr dans rhs
 specialCase _ state = state
@@ -63,7 +64,7 @@ resolveFact :: [Relation] -> [FactState] -> Expr -> Either String Resolved
 resolveFact rules knowledge subgoal =
   case lookup subgoal knowledge of
     Just st -> Right (knowledge, st)
-    Nothing -> searchFact rules knowledge subgoal
+    Nothing -> evalGoal rules knowledge subgoal
 
 
 -- | the function that evaluate an Expression
@@ -73,10 +74,26 @@ eval rulesList knowledge (lhs `Imply` rhs) = do
   return (k, specialCase rhs s)
 eval _ _ _ = error "Unreachable Code"
 
+evalGoal :: [Relation] -> [FactState] -> Expr -> Either String Resolved
+evalGoal rules knowledge goal =
+  let
+    combineGoalAndOposite Types.True Types.True = Left "Incoherent rules and/or initial facts"
+    combineGoalAndOposite _ Types.True = Right Types.False
+    combineGoalAndOposite _ (Unprovable u) = Right (Unprovable u)
+    combineGoalAndOposite (Unsolved _) _ = Right Types.False
+    combineGoalAndOposite goal _oposite = Right goal
+  in do
+    (k, goalState) <- resolveRules rules knowledge goal
+    (finalKnowledge, opositeState) <- resolveRules rules k (Not goal)
+    resultState <- tgoalState `combineGoalAndOposite` opositeState
+    return ((goal, resultState):finalKnowledge, resultState)
+
+
+
 -- | Filter rules concerning the goal and resolve it
 searchFact :: [Relation] -> [FactState] -> Expr -> Either String Resolved
 searchFact rules knowledge goal = do
-  r <- resolveRules rules knowledge goal
+  r <- evalGoal rules knowledge goal
   case r of
     (newknown, Unsolved _) -> return ((goal, Types.False):newknown, Types.False)
     (newknown, goalState) -> return ((goal, goalState):newknown, goalState)
