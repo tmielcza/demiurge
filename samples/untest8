@@ -1,7 +1,6 @@
 A ^ B ^ C ^ D => E
 
-=
+=A
 
-# Tout devrait etre faux
-# Et le Unprovable !A alors que A est declare True n'a aucun sens. Aucun.
+# Tout devrait etre unprovable sauf A
 ?ABCDE
