@@ -15,28 +15,35 @@ import Control.Monad.Trans.Reader (
   ask
   )
 
+import Control.Monad.Except (
+  ExceptT,
+  runExceptT,
+  throwError
+  )
+
 import Control.Monad.Trans.Class (lift)
 
 import Types as T
 
 import BackwardChaining (resolveFact)
 
-type Resolution =  ReaderT [Relation] (S.State [FactState]) T.State
+type Resolution =  ExceptT String (ReaderT [Relation] (S.State [FactState])) T.State
 
 fromRight (Right a) = a
 
-resolveFact' :: [Relation] -> [FactState] -> Expr -> Resolved
-resolveFact' r k = fromRight . resolveFact r k
+resolveFact' :: [Relation] -> [FactState] -> Expr -> Either String Resolved
+resolveFact' = resolveFact
 
 
 evalExpr' :: Expr -> Resolution
 
 evalExpr' (Fact fact) = do
-  rules <- ask
-  knowledge <- lift $ get
-  let (k, s) = resolveFact' rules knowledge (Fact fact)
-  lift $ put k
-  return s
+  rules <- lift $ ask
+  knowledge <- lift $ lift $ get
+  let e = resolveFact' rules knowledge (Fact fact)
+  either throwError (\(k, s) -> do
+                        lift $ lift $ put k
+                        return s) e
 
 evalExpr' (lhs `Xor` rhs) = do
   l <- evalExpr' lhs
@@ -46,7 +53,7 @@ evalExpr' (lhs `Xor` rhs) = do
 
 
 main = do
-  let rules = [Fact "Q" `Imply` Fact "A"]
-      expr = (Fact "Q" `Xor` ((Fact "A") `Xor` (Fact "B")))
+  let rules = [(Fact "A" `Xor` Fact "B" `Xor` Fact "C" `Xor` Fact "D") `Imply` (Fact "E")]
+      expr = (Fact "A" `Xor` Fact "B" `Xor` Fact "C")
     in
-    (print . show . runState (runReaderT (evalExpr' expr) rules) ) [(Fact "Q", T.True)]
+    (print . show . runState (runReaderT (runExceptT (evalExpr' expr)) rules) ) [(Fact "A", T.True)]
