@@ -6,7 +6,8 @@ import Control.Monad.Trans.State.Lazy as S (
   execState,
   runState,
   get,
-  put
+  put,
+  modify
   )
 
 import Control.Monad.Trans.Reader (
@@ -25,19 +26,32 @@ import Control.Monad.Trans.Class (lift)
 
 import Types as T
 
-import BackwardChaining (resolveFact, evalGoal)
+import BackwardChaining (resolveFact, evalGoal, resolveRules)
 
 type Resolution =  ExceptT String (ReaderT [Relation] (S.State [FactState])) T.State
 
-evalGoal' :: Expr -> Resolution
-evalGoal' f = do
+resolveRules' :: Expr -> Resolution
+resolveRules' f = do
   rules <- lift $ ask
   knowledge <- lift $ lift $ get
-  let e = evalGoal rules knowledge f
+  let e = resolveRules rules knowledge f
   either throwError (\(k, s) -> do
                         lift $ lift $ put k
                         return s) e
 
+evalGoal' goal =
+  let
+    combineGoalAndOposite T.True T.True = Left "Incoherent rules and/or initial facts"
+    combineGoalAndOposite _ T.True = Right T.False
+    combineGoalAndOposite _ (Unprovable u) = Right (Unprovable u)
+    combineGoalAndOposite (Unsolved _) _ = Right T.False
+    combineGoalAndOposite goal _oposite = Right goal
+  in do
+    s <- resolveRules' goal
+    ns <- resolveRules' (Not goal)
+    let resultState = s `combineGoalAndOposite` ns
+    either (throwError) (\s -> do {lift $ lift $ modify ((goal, s):) ; return s}) resultState
+  
 
 resolveFact' :: Expr -> Resolution
 resolveFact' fact = do
