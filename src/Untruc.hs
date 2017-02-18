@@ -95,4 +95,4 @@ main = do
   let rules = [(Fact "A" `Xor` Fact "B" `Xor` Fact "C" `Xor` Fact "D") `Imply` (Fact "E")]
       expr = (Fact "A" `Xor` Fact "B" `Xor` Fact "C")
     in
-    (print . show . runState (runReaderT (runExceptT (evalExpr' expr)) rules) ) [(Fact "A", T.True)]
+    (print . show . runState (runReaderT (runExceptT (evalExpr' expr)) rules) ) [(Fact "V", T.True)]
