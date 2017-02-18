@@ -29,24 +29,14 @@ resolveFact' :: [Relation] -> [FactState] -> Expr -> Resolved
 resolveFact' r k = fromRight . resolveFact r k
 
 
-evalFact :: Expr -> Resolution
-
-{-
-evalFact fact = ReaderT (\rules ->
-                           state (\s ->
-                                    swap (resolveFact' rules s fact)))
--}
-
-evalFact fact = do
-  rules <- ask
-  knowledge <- lift $ get
-  let (k, s) = resolveFact' rules knowledge fact
-  lift $ put k
-  return s
-
 evalExpr' :: Expr -> Resolution
 
-evalExpr' (Fact fact) = evalFact (Fact fact)
+evalExpr' (Fact fact) = do
+  rules <- ask
+  knowledge <- lift $ get
+  let (k, s) = resolveFact' rules knowledge (Fact fact)
+  lift $ put k
+  return s
 
 evalExpr' (lhs `Xor` rhs) = do
   l <- evalExpr' lhs
