@@ -51,7 +51,7 @@ evalExpr' (Fact fact) = evalFact (Fact fact)
 evalExpr' (lhs `Xor` rhs) = do
   l <- evalExpr' lhs
   r <- evalExpr' rhs
-  return (l @| r)
+  return (l @^ r)
 
 
 
