@@ -26,18 +26,29 @@ import Control.Monad.Trans.Class (lift)
 
 import Types as T
 
-import BackwardChaining (resolveFact, evalGoal, resolveRules)
+import Inference
+
+import BackwardChaining (resolveFact, evalGoal, resolveRules, evalImplication)
 
 type Resolution =  ExceptT String (ReaderT [Relation] (S.State [FactState])) T.State
 
 resolveRules' :: Expr -> Resolution
-resolveRules' f = do
-  rules <- lift $ ask
-  knowledge <- lift $ lift $ get
-  let e = resolveRules rules knowledge f
-  either throwError (\(k, s) -> do
-                        lift $ lift $ put k
-                        return s) e
+resolveRules' goal = do
+  (lift . lift . modify) ((goal, Unsolved goal):)
+  rules <- lift ask
+  let concernedRules = inferRules rules goal
+  let evalRule state relation = do
+        s <- state
+        s' <- eval' relation
+        return (s @| s')
+  foldl evalRule (return (Unsolved goal)) concernedRules
+
+eval' :: Relation -> Resolution
+eval' (lhs `Imply` rhs) = do
+  s <- evalExpr' lhs
+  return (evalImplication rhs s)
+eval' _ = error "Unreachable Code"
+
 
 evalGoal' goal =
   let
@@ -51,7 +62,7 @@ evalGoal' goal =
     ns <- resolveRules' (Not goal)
     let resultState = s `combineGoalAndOposite` ns
     either (throwError) (\s -> do {lift $ lift $ modify ((goal, s):) ; return s}) resultState
-  
+
 
 resolveFact' :: Expr -> Resolution
 resolveFact' fact = do

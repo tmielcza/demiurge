@@ -3,7 +3,8 @@ module BackwardChaining
   getStateOfQueries,
   resolveFact,
   evalGoal,
-  resolveRules
+  resolveRules,
+  evalImplication
     ) where
 
 import Types
