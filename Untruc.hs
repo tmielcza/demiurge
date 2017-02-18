@@ -29,27 +29,36 @@ import BackwardChaining (resolveFact)
 
 type Resolution =  ExceptT String (ReaderT [Relation] (S.State [FactState])) T.State
 
-fromRight (Right a) = a
-
-resolveFact' :: [Relation] -> [FactState] -> Expr -> Either String Resolved
-resolveFact' = resolveFact
-
-
-evalExpr' :: Expr -> Resolution
-
-evalExpr' (Fact fact) = do
+resolveFact' :: Expr -> Resolution
+resolveFact' fact = do
   rules <- lift $ ask
   knowledge <- lift $ lift $ get
-  let e = resolveFact' rules knowledge (Fact fact)
+  let e = resolveFact rules knowledge fact
   either throwError (\(k, s) -> do
                         lift $ lift $ put k
                         return s) e
+
+
+evalExpr' :: Expr -> Resolution
 
 evalExpr' (lhs `Xor` rhs) = do
   l <- evalExpr' lhs
   r <- evalExpr' rhs
   return (l @^ r)
 
+evalExpr' (lhs `Or` rhs) = do
+  l <- evalExpr' lhs
+  r <- evalExpr' rhs
+  return (l @| r)
+
+evalExpr' (lhs `And` rhs) = do
+  l <- evalExpr' lhs
+  r <- evalExpr' rhs
+  return (l @+ r)
+
+evalExpr' (Not e) = do {s <- evalExpr' e; return (T.not s)}
+
+evalExpr' (Fact fact) = resolveFact' (Fact fact)
 
 
 main = do
