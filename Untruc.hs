@@ -4,12 +4,15 @@ import Control.Monad.Trans.State.Lazy as S (
   State,
   state,
   execState,
-  runState
+  runState,
+  get,
+  put
   )
 
 import Control.Monad.Trans.Reader (
   ReaderT(ReaderT),
-  runReaderT
+  runReaderT,
+  ask
   )
 
 import Control.Monad.Trans.Class (lift)
@@ -22,16 +25,24 @@ type Resolution =  ReaderT [Relation] (S.State [FactState]) T.State
 
 fromRight (Right a) = a
 
-
 resolveFact' :: [Relation] -> [FactState] -> Expr -> Resolved
 resolveFact' r k = fromRight . resolveFact r k
 
+
 evalFact :: Expr -> Resolution
 
+{-
 evalFact fact = ReaderT (\rules ->
                            state (\s ->
                                     swap (resolveFact' rules s fact)))
+-}
 
+evalFact fact = do
+  rules <- ask
+  knowledge <- lift $ get
+  let (k, s) = resolveFact' rules knowledge fact
+  lift $ put k
+  return s
 
 evalExpr' :: Expr -> Resolution
 
