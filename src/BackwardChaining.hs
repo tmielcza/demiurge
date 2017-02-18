@@ -1,7 +1,8 @@
 module BackwardChaining
 (
   getStateOfQueries,
-  resolveFact
+  resolveFact,
+  evalGoal
     ) where
 
 import Types

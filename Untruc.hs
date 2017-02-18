@@ -25,19 +25,24 @@ import Control.Monad.Trans.Class (lift)
 
 import Types as T
 
-import BackwardChaining (resolveFact)
+import BackwardChaining (resolveFact, evalGoal)
 
 type Resolution =  ExceptT String (ReaderT [Relation] (S.State [FactState])) T.State
 
-resolveFact' :: Expr -> Resolution
-resolveFact' fact = do
+evalGoal' :: Expr -> Resolution
+evalGoal' f = do
   rules <- lift $ ask
   knowledge <- lift $ lift $ get
-  let e = resolveFact rules knowledge fact
+  let e = evalGoal rules knowledge f
   either throwError (\(k, s) -> do
                         lift $ lift $ put k
                         return s) e
 
+
+resolveFact' :: Expr -> Resolution
+resolveFact' fact = do
+  knowledge <- lift $ lift $ get
+  maybe (evalGoal' fact) (return) (lookup fact knowledge)
 
 evalExpr' :: Expr -> Resolution
 
