@@ -70,8 +70,8 @@ andBlock :: ReadP Expr
 andBlock = factorBlanks `chainl1` andOp
 
 -- | Parser for Expression that form Init Fact
-initFacts :: ReadP Init
-initFacts = do {char '='; spaces; x <- binaryFact `sepBy` spaces; return (map exprToFactState x)}
+initFacts :: ReadP [(String, State)]
+initFacts = do {char '='; spaces; x <- binaryFact `sepBy` spaces; return (map exprToStringState x)}
 
 -- | Parser for Expression that form Query
 queryFacts :: ReadP Query

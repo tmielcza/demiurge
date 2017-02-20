@@ -31,8 +31,7 @@ import Prelude hiding(lookup, filter)
 import Data.Map(insert, lookup, toList, fromList)
 
 resolveRules :: Expr -> Resolution T.State
-resolveRules goal@(Fact c) = do
-  (lift . lift . modify) (insert c (Unsolved goal))
+resolveRules goal = do
   rules <- lift ask
   let concernedRules = inferRules rules goal
   let evalRule state relation = do
@@ -50,6 +49,7 @@ eval _ = error "Unreachable Code"
 
 evalGoal :: Expr -> Resolution T.State
 evalGoal goal@(Fact c) = do
+    (lift . lift . modify) (insert c (Unsolved goal))
     s <- resolveRules goal
     ns <- resolveRules (Not goal)
     let resultState = s `combineGoalAndOposite` ns

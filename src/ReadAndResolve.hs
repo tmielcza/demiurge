@@ -10,7 +10,7 @@ parseFile path = do
   content <- readFile (path)
   return (parse content)
 
-readAndResolve :: String -> IO (Either String [FactState])
+readAndResolve :: String -> IO (Either String [(String, State)])
 readAndResolve filename= do
   parsed <- parseFile filename
   let ret = parsed >>= resolve
