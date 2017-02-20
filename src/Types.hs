@@ -30,6 +30,9 @@ import Data.Map
 import Prelude hiding (Bool(..), not)
 import qualified Prelude (Bool(..), not)
 
+type Query = [Expr]
+type Init = [(String, Types.State)]
+
 -- | the type of expressions all constructors are recursives except Fact
 data Expr = Xor Expr Expr |
             Or Expr Expr |
