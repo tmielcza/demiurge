@@ -26,10 +26,13 @@ import Inference
 
 import Logic
 
+import Prelude hiding(lookup, filter)
+
+import Data.Map(insert, lookup, toList, fromList)
 
 resolveRules :: Expr -> Resolution T.State
-resolveRules goal = do
-  (lift . lift . modify) ((goal, Unsolved goal):)
+resolveRules goal@(Fact c) = do
+  (lift . lift . modify) (insert c (Unsolved goal))
   rules <- lift ask
   let concernedRules = inferRules rules goal
   let evalRule state relation = do
@@ -46,25 +49,27 @@ eval _ = error "Unreachable Code"
 
 
 evalGoal :: Expr -> Resolution T.State
-evalGoal goal = do
+evalGoal goal@(Fact c) = do
     s <- resolveRules goal
     ns <- resolveRules (Not goal)
     let resultState = s `combineGoalAndOposite` ns
-    either (throwError) (\s -> do {lift $ lift $ modify ((goal, s):) ; return s}) resultState
+    either (throwError) (\s -> do {lift $ lift $ modify (insert c s) ; return s}) resultState
 
 
 resolveFact :: Expr -> Resolution T.State
-resolveFact fact = do
+resolveFact fact@(Fact c) = do
   knowledge <- lift $ lift $ get
-  maybe (evalGoal fact) (return) (lookup fact knowledge)
+  maybe (evalGoal fact) (return) (lookup c knowledge)
 
 
-getStateOfQueries :: [Expr] -> Resolution [FactState]
+getStateOfQueries :: [Expr] -> Resolution [(String, State)]
 getStateOfQueries queries = do
   mapM_ resolveFact queries
-  collectedKnowledge <- lift $ lift get
-  return $ filter (\(fact, _) -> elem fact queries) (collectedKnowledge)
+  knowledge <- lift $ lift get
+  return $ [ x | x@(f, s) <- toList knowledge, elem (Fact f) queries]
+  --filterWithKey (\fact _ -> elem fact queries) (collectedKnowledge)
 
-resolve :: ([Relation], [FactState], [Expr]) -> Either String [FactState]
-resolve (rules, knowledge, queries) =
+resolve :: ([Relation], [(String, State)], [Expr]) -> Either String [(String, State)]
+resolve (rules, init, queries) =
+  let knowledge = fromList init in
   fst $ runState (runReaderT (runExceptT (getStateOfQueries queries)) rules) knowledge

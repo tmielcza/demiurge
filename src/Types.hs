@@ -13,10 +13,10 @@ module Types
   Init,
   Query,
   Types.State(..),
-  FactState,
+  Knowledge,
   Resolved,
   Resolution,
-  exprToFactState
+  exprToStringState
     ) where
 
 import Control.Monad.Trans.State.Lazy as S (State)
@@ -24,6 +24,8 @@ import Control.Monad.Trans.State.Lazy as S (State)
 import Control.Monad.Trans.Reader (ReaderT)
 
 import Control.Monad.Except (ExceptT)
+
+import Data.Map
 
 import Prelude hiding (Bool(..), not)
 import qualified Prelude (Bool(..), not)
@@ -39,21 +41,16 @@ data State = Unsolved Expr | True | False | Unprovable Expr
   deriving (Show, Eq)
 
 -- | Association of an Expr (Mostly a Fact) to a State
-type FactState = (Expr, Types.State)
+--type FactState = (Expr, Types.State)
+type Knowledge = Map String Types.State
 
 -- | The type of the relations between the Exprs. They form rules.
 data Relation = Eq Expr Expr | Imply Expr Expr
 
--- | this type contains an Expr array. They are init Fact obtained by parsing.
-type Init = [FactState]
-
--- | this type contains an Expr array. They are queries obtained by parsing.
-type Query = [Expr]
-
 -- | this type is used for resolution, it contains the knowledges first and then the state of the goal
-type Resolved = ([FactState], Types.State)
+type Resolved = (Knowledge, Types.State)
 
-type Resolution a =  ExceptT String (ReaderT [Relation] (S.State [FactState])) a
+type Resolution a =  ExceptT String (ReaderT [Relation] (S.State Knowledge)) a
 
 
 instance Eq Expr where
@@ -85,8 +82,8 @@ cmpBinaryExprSides lhs1 rhs1 lhs2 rhs2
   | lhs1 == rhs2 && lhs2 == rhs1 = Prelude.True
   | otherwise = Prelude.False
 
-
-exprToFactState :: Expr -> FactState
-exprToFactState (Not f) = (f, False)
-exprToFactState f = (f, True)
+exprToStringState :: Expr -> (String, Types.State)
+exprToStringState (Not (Not (e))) = exprToStringState e
+exprToStringState (Not (Fact f)) = (f, False)
+exprToStringState (Fact f) = (f, True)
 
