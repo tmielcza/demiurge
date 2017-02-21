@@ -14,49 +14,48 @@ resolveFileTest filepath expect=
           assertEqual filepath expect ret
      in testCase filepath fileAssertion
 
---fact @# state = (Fact fact, state)
 
 fileSuite = testGroup "Files tests"
             [
-              resolveFileTest "samples/easy" (Right [(Fact "B", True)]),
+              resolveFileTest "samples/easy" (Right [("B", True)]),
               resolveFileTest "samples/error1"  (Left "Incoherent rules and/or initial facts"),
-              resolveFileTest "samples/conjunction" (Right [(Fact "C", False)]),
+              resolveFileTest "samples/conjunction" (Right [("C", False)]),
               resolveFileTest "samples/invalid" (Left "Incoherent rules and/or initial facts"),
               resolveFileTest "samples/subject" (Left "Incoherent rules and/or initial facts"),
 
               resolveFileTest "samples/test1" (Right [
-                (Fact "B", Unprovable (Not(Not(Fact "D")) `And` (Not(Fact "B")))),
-                (Fact "D", Unprovable (Not(Not(Fact "D")) `And` (Not(Fact "B"))))
+                ("B", Unprovable (Not(Not(Fact "D")) `And` (Not(Fact "B")))),
+                ("D", Unprovable (Not(Not(Fact "D")) `And` (Not(Fact "B"))))
                  ]),
 
-              resolveFileTest "samples/test2" (Right [(Fact "Y", True)]),
-              resolveFileTest "samples/equivalence" (Right [(Fact "A", False), (Fact "C", False), (Fact "D", True)]),
-              resolveFileTest "samples/testAnonA" (Right [(Fact "Enfaitcestfaux", False)]),
-              resolveFileTest "samples/transposition" (Right [(Fact "R", True)]),
-              resolveFileTest "samples/unso" (Right [(Fact "Reponsefaux", False)]),
+              resolveFileTest "samples/test2" (Right [("Y", True)]),
+              resolveFileTest "samples/equivalence" (Right [("A", False), ("C", False), ("D", True)]),
+              resolveFileTest "samples/testAnonA" (Right [("Enfaitcestfaux", False)]),
+              resolveFileTest "samples/transposition" (Right [("R", True)]),
+              resolveFileTest "samples/unso" (Right [("Reponsefaux", False)]),
               resolveFileTest "samples/inferenceRule" (Right [
-                (Fact "Q", True),
-                (Fact "R", False),
-                (Fact "V", True),
-                (Fact "W", True)
+                ("Q", True),
+                ("R", False),
+                ("V", True),
+                ("W", True)
                  ]),
-              resolveFileTest "samples/simpleTest" (Right [(Fact "B", True)]),
-              resolveFileTest "samples/untest" (Right [(Fact "Maybe", False), (Fact "True", True)]),
-              resolveFileTest "samples/untest2" (Right [(Fact "E", False)]),
-              resolveFileTest "samples/untest3"  (Right [(Fact "A", False), (Fact "B", False), (Fact "C", False), (Fact "D", False)]),
+              resolveFileTest "samples/simpleTest" (Right [("B", True)]),
+              resolveFileTest "samples/untest" (Right [("Maybe", False), ("True", True)]),
+              resolveFileTest "samples/untest2" (Right [("E", False)]),
+              resolveFileTest "samples/untest3"  (Right [("A", False), ("B", False), ("C", False), ("D", False)]),
               resolveFileTest "samples/untest4" (Right [
-                (Fact "A", True),
-                (Fact "B", Unprovable((Not(Fact "A")) `Xor` (Not(Fact "C")))),
-                (Fact "C", Unprovable((Not(Fact "A")) `Xor` (Not(Fact "B"))))
+                ("A", True),
+                ("B", Unprovable((Not(Fact "A")) `Xor` (Not(Fact "C")))),
+                ("C", Unprovable((Not(Fact "A")) `Xor` (Not(Fact "B"))))
                   ]),
-              resolveFileTest "samples/untest6" (Right [(Fact "A", False), (Fact "B", False)]),
-              resolveFileTest "samples/untest7" (Right [(Fact "A", False), (Fact "B", False), (Fact "C", False), (Fact "E", False)]),
+              resolveFileTest "samples/untest6" (Right [("A", False), ("B", False)]),
+              resolveFileTest "samples/untest7" (Right [("A", False), ("B", False), ("C", False), ("E", False)]),
               resolveFileTest "samples/untest8" (Right [
-                (Fact "A", True),
-                (Fact "B", Unprovable (Fact "Jesaispas")),
-                (Fact "C", Unprovable (Fact "aremplir")),
-                (Fact "E", Unprovable (Fact "avoir"))
+                ("A", True),
+                ("B", Unprovable (Fact "Jesaispas")),
+                ("C", Unprovable (Fact "aremplir")),
+                ("E", Unprovable (Fact "avoir"))
                 ]),
-              resolveFileTest "samples/untest9" (Right [(Fact "A", Unprovable (Not $ Fact "B")), (Fact "B", Unprovable (Not $ Fact "A"))])
+              resolveFileTest "samples/untest9" (Right [("A", Unprovable (Not $ Fact "B")), ("B", Unprovable (Not $ Fact "A"))])
 
             ]
