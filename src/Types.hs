@@ -15,13 +15,15 @@ module Types
   Types.State(..),
   Knowledge,
   Resolved,
-  Resolution,
+  Resolution, getKnowledge, getRules, modifyKnowledge,
   exprToStringState
     ) where
 
 import Control.Monad.Trans.State.Lazy as S (State)
+import Control.Monad.State.Class
 
 import Control.Monad.Trans.Reader (ReaderT)
+import Control.Monad.Reader.Class
 
 import Control.Monad.Except (ExceptT)
 
@@ -53,7 +55,30 @@ data Relation = Eq Expr Expr | Imply Expr Expr
 -- | this type is used for resolution, it contains the knowledges first and then the state of the goal
 type Resolved = (Knowledge, Types.State)
 
-type Resolution a =  ExceptT String (ReaderT [Relation] (S.State Knowledge)) a
+type Resolution a = ExceptT String (ReaderT [Relation] (S.State Knowledge)) a
+--               MonadState Knowledge m => m Knowledge
+getKnowledge :: (MonadState s m) => m s
+getKnowledge = get
+
+{-
+ quelle difference avec le modify normal
+ modify :: MonadState s m => (s -> s) -> m ()
+modify f = state (\s -> ((), f s))
+-}
+modifyKnowledge :: MonadState s m => (s -> s) -> m ()
+modifyKnowledge f = state (\s -> ((), f s))
+
+getRules :: (MonadReader r m) => m r
+getRules = ask
+
+
+
+{-
+modify :: MonadState s m => (s -> s) -> m ()
+getKnowledge :: MonadState s m => m s
+modifyKnowledge
+-}
+
 
 
 instance Eq Expr where

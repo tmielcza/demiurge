@@ -32,7 +32,7 @@ import Data.Map(insert, lookup, toList, fromList)
 
 resolveRules :: Expr -> Resolution T.State
 resolveRules goal = do
-  rules <- lift ask
+  rules <- getRules
   let concernedRules = inferRules rules goal
   let evalRule state relation = do
         s <- state
@@ -49,23 +49,23 @@ eval _ = error "Unreachable Code"
 
 evalGoal :: Expr -> Resolution T.State
 evalGoal goal@(Fact c) = do
-    (lift . lift . modify) (insert c (Unsolved goal))
+    modifyKnowledge (insert c (Unsolved goal))
     s <- resolveRules goal
     ns <- resolveRules (Not goal)
     let resultState = s `combineGoalAndOposite` ns
-    either (throwError) (\s -> do {lift $ lift $ modify (insert c s) ; return s}) resultState
+    either (throwError) (\s -> do {modifyKnowledge (insert c s) ; return s}) resultState
 
 
 resolveFact :: Expr -> Resolution T.State
 resolveFact fact@(Fact c) = do
-  knowledge <- lift $ lift $ get
+  knowledge <- getKnowledge
   maybe (evalGoal fact) (return) (lookup c knowledge)
 
 
 getStateOfQueries :: [Expr] -> Resolution [(String, State)]
 getStateOfQueries queries = do
   mapM_ resolveFact queries
-  knowledge <- lift $ lift get
+  knowledge <- getKnowledge
   return $ [ x | x@(f, s) <- toList knowledge, elem (Fact f) queries]
   --filterWithKey (\fact _ -> elem fact queries) (collectedKnowledge)
 
