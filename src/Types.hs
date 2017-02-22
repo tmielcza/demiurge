@@ -14,7 +14,6 @@ module Types
   Query,
   Types.State(..),
   Knowledge,
-  Resolved,
   Resolution, getKnowledge, getRules, modifyKnowledge,
   exprToStringState
     ) where
@@ -51,9 +50,6 @@ type Knowledge = Map String Types.State
 
 -- | The type of the relations between the Exprs. They form rules.
 data Relation = Eq Expr Expr | Imply Expr Expr
-
--- | this type is used for resolution, it contains the knowledges first and then the state of the goal
-type Resolved = (Knowledge, Types.State)
 
 type Resolution a = ExceptT String (ReaderT [Relation] (S.State Knowledge)) a
 --               MonadState Knowledge m => m Knowledge
