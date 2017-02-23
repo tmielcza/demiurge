@@ -2,14 +2,20 @@ module BackwardChaining (
   resolve
   ) where
 
-import Control.Monad.Trans.State.Lazy as S (
+import Control.Monad.State.Class (
   get,
-  modify,
+  modify
+  )
+
+import Control.Monad.Trans.State.Lazy as S (
   runState
   )
 
+import Control.Monad.Reader.Class (
+  ask
+  )
+
 import Control.Monad.Trans.Reader (
-  ask,
   runReaderT
   )
 
@@ -32,7 +38,7 @@ import Data.Map(insert, lookup, toList, fromList)
 
 resolveRules :: Expr -> Resolution T.State
 resolveRules goal = do
-  rules <- getRules
+  rules <- ask
   let concernedRules = inferRules rules goal
   let evalRule state relation = do
         s <- state
@@ -49,23 +55,23 @@ eval _ = error "Unreachable Code"
 
 evalGoal :: Expr -> Resolution T.State
 evalGoal goal@(Fact c) = do
-    modifyKnowledge (insert c (Unsolved goal))
+    modify (insert c (Unsolved goal))
     s <- resolveRules goal
     ns <- resolveRules (Not goal)
     let resultState = s `combineGoalAndOposite` ns
-    either (throwError) (\s -> do {modifyKnowledge (insert c s) ; return s}) resultState
+    either (throwError) (\s -> do {modify (insert c s) ; return s}) resultState
 
 
 resolveFact :: Expr -> Resolution T.State
 resolveFact fact@(Fact c) = do
-  knowledge <- getKnowledge
+  knowledge <- get
   maybe (evalGoal fact) (return) (lookup c knowledge)
 
 
 getStateOfQueries :: [Expr] -> Resolution [(String, State)]
 getStateOfQueries queries = do
   mapM_ resolveFact queries
-  knowledge <- getKnowledge
+  knowledge <- get
   return $ [ x | x@(f, s) <- toList knowledge, elem (Fact f) queries]
   --filterWithKey (\fact _ -> elem fact queries) (collectedKnowledge)
 

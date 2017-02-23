@@ -14,7 +14,7 @@ module Types
   Query,
   Types.State(..),
   Knowledge,
-  Resolution, getKnowledge, getRules, modifyKnowledge,
+  Resolution,
   exprToStringState
     ) where
 
@@ -52,28 +52,23 @@ type Knowledge = Map String Types.State
 data Relation = Eq Expr Expr | Imply Expr Expr
 
 type Resolution a = ExceptT String (ReaderT [Relation] (S.State Knowledge)) a
---               MonadState Knowledge m => m Knowledge
-getKnowledge :: (MonadState s m) => m s
+
+
+{-getKnowledge :: (MonadState s m) => m s
 getKnowledge = get
 
-{-
+
  quelle difference avec le modify normal
  modify :: MonadState s m => (s -> s) -> m ()
 modify f = state (\s -> ((), f s))
--}
+
 modifyKnowledge :: MonadState s m => (s -> s) -> m ()
-modifyKnowledge f = state (\s -> ((), f s))
+modifyKnowledge = modify
 
 getRules :: (MonadReader r m) => m r
 getRules = ask
-
-
-
-{-
-modify :: MonadState s m => (s -> s) -> m ()
-getKnowledge :: MonadState s m => m s
-modifyKnowledge
 -}
+
 
 
 
