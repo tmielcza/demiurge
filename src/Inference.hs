@@ -5,38 +5,38 @@ module Inference
 
 import Types
 
+infer :: [Relation] -> Expr -> [([Relation], Relation)]
+infer stack@((premices `Imply` (lhs `And` rhs)):_) goal =
+  infer (premices `Imply` rhs):stack goal ++
+  infer (premices `Imply` lhs):stack goal
 
-infer :: Relation -> Expr -> [Relation]
-infer (premices `Imply` (lhs `And` rhs)) goal =
-  infer (premices `Imply` rhs) goal ++
-  infer (premices `Imply` lhs) goal
+infer stack@((premices `Imply` (lhs `Or` rhs)):_) goal =
+  infer ((premices `And` Not lhs) `Imply` rhs):stack goal ++
+  infer ((premices `And` Not rhs) `Imply` lhs):stack goal
 
-infer (premices `Imply` (lhs `Or` rhs)) goal =
-  infer ((premices `And` Not lhs) `Imply` rhs) goal ++
-  infer ((premices `And` Not rhs) `Imply` lhs) goal
-
-infer (premices `Imply` (lhs `Xor` rhs)) goal =
- infer (premices `Imply` ((lhs `Or` rhs) `And` Not (lhs `And` rhs))) goal
+infer stack@((premices `Imply` (lhs `Xor` rhs)):_) goal =
+  infer (premices `Imply` ((lhs `Or` rhs) `And` Not (lhs `And` rhs))):stack goal
 
 
 -- inference of not rules
-infer (rhs `Imply` Not (Not lhs)) goal =
-  infer (rhs `Imply` lhs) goal
+infer stack@((rhs `Imply` Not (Not lhs)):_) goal =
+  infer (rhs `Imply` lhs):stack goal
 
-infer (premices `Imply` Not (lhs `And` rhs)) goal =
-  infer (premices `Imply` (Not lhs `Or` Not rhs)) goal
+infer stack@((premices `Imply` Not (lhs `And` rhs)):_) goal =
+  infer (premices `Imply` (Not lhs `Or` Not rhs)):stack goal
 
-infer (premices `Imply` Not (lhs `Or` rhs)) goal =
-  infer (premices `Imply` (Not lhs `And` Not rhs)) goal
+infer stack@((premices `Imply` Not (lhs `Or` rhs)):_) goal =
+  infer (premices `Imply` (Not lhs `And` Not rhs)):stack goal
 
-infer (premices `Imply` Not (lhs `Xor` rhs)) goal =
-  infer (premices `Imply` (Not (lhs `Or` rhs) `Or` (lhs `And` rhs))) goal
+infer stack@((premices `Imply` Not (lhs `Xor` rhs)):_) goal =
+  infer (premices `Imply` (Not (lhs `Or` rhs) `Or` (lhs `And` rhs))):stack goal
 
 -- return the rule sent if the rhs is the fact we are looking for
-infer r@(_ `Imply` fact) goal
-  | goal == fact = [r]
+infer (r@(_ `Imply` fact):tail) goal
+  | goal == fact = [(tail, r)]
  -- | Not goal == fact = [r]
   | otherwise    = []
+
 
 --modus tollens or transposition
 launchInferences ( lhs `Imply` rhs) goal =
@@ -46,5 +46,5 @@ launchInferences ( lhs `Imply` rhs) goal =
 launchInferences (rhs `Eq` lhs) goal =
   launchInferences (rhs `Imply` lhs) goal ++ launchInferences (lhs `Imply` rhs) goal
 
--- inferRules :: [Relation] -> Expr -> [Relation]
+-- inferRules :: [Relation] -> Expr -> [([Relation], Relation)]
 inferRules rules goal = foldr (\r -> (++) (launchInferences r goal)) [] rules
