@@ -1,7 +1,7 @@
 module ReadAndResolve where
 
 import Parse(parse)
-import BackwardChaining(resolve)
+import BackwardChaining(resolve, resolve2)
 import Types
 import Interactive(askForChange)
 
@@ -13,8 +13,10 @@ parseFile path = do
 readAndResolve :: String -> IO (Either String [(String, State)])
 readAndResolve filename= do
   parsed <- parseFile filename
-  let ret = parsed >>= resolve
-  print ret
+  let resolution = parsed >>= resolve2
+  let ret = fmap fst resolution
+  either (print ) (putStr) (fmap snd resolution)
+  print (ret)
   return (ret)
 
 interactiveMode:: String -> IO ()

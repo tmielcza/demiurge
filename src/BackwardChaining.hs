@@ -1,5 +1,5 @@
 module BackwardChaining (
-  resolve
+  resolve, resolve2
   ) where
 
 import Control.Monad.State.Class (
@@ -17,6 +17,14 @@ import Control.Monad.Reader.Class (
 
 import Control.Monad.Trans.Reader (
   runReaderT
+  )
+
+import Control.Monad.Trans.Writer (
+  runWriterT
+  )
+
+import Control.Monad.Writer.Class (
+  tell
   )
 
 import Control.Monad.Except (
@@ -43,6 +51,7 @@ resolveRules goal = do
   let evalRule state relation = do
         s <- state
         s' <- eval relation
+        if (s' == T.True) then tell ("rule " ++ show relation ++ " is right\n") else tell ""
         return (s @| s')
   foldl evalRule (return (Unsolved goal)) concernedRules
 
@@ -56,16 +65,18 @@ eval _ = error "Unreachable Code"
 evalGoal :: Expr -> Resolution T.State
 evalGoal goal@(Fact c) = do
     modify (insert c (Unsolved goal))
+    tell "\n"
     s <- resolveRules goal
     ns <- resolveRules (Not goal)
     let resultState = s `combineGoalAndOposite` ns
-    either (throwError) (\s -> do {modify (insert c s) ; return s}) resultState
+    either (throwError) (\s -> do {tell (c ++ " is " ++ show s ++ "\n") ; modify (insert c s) ; return s}) resultState
 
 
 resolveFact :: Expr -> Resolution T.State
 resolveFact fact@(Fact c) = do
+  tell ("searching " ++ c ++ " ")
   knowledge <- get
-  maybe (evalGoal fact) (return) (lookup c knowledge)
+  maybe (evalGoal fact) (\x -> do{tell (show x ++ "\n"); return x}) ( lookup c knowledge)
 
 
 getStateOfQueries :: [Expr] -> Resolution [(String, State)]
@@ -77,5 +88,14 @@ getStateOfQueries queries = do
 
 resolve :: ([Relation], [(String, State)], [Expr]) -> Either String [(String, State)]
 resolve (rules, init, queries) =
-  let knowledge = fromList init in
-  fst $ runState (runReaderT (runExceptT (getStateOfQueries queries)) rules) knowledge
+  let knowledge = fromList init
+      results = fst $ runState (runReaderT (runExceptT (runWriterT (getStateOfQueries queries))) rules) knowledge
+  in
+  trace (show $ fmap snd results) (fmap fst results)
+
+resolve2 :: ([Relation], [(String, State)], [Expr]) -> Either String ([(String, State)], String)
+resolve2 (rules, init, queries) =
+  let knowledge = fromList init
+      results = fst $ runState (runReaderT (runExceptT (runWriterT (getStateOfQueries queries))) rules) knowledge
+  in
+  results

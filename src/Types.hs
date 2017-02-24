@@ -24,6 +24,9 @@ import Control.Monad.State.Class
 import Control.Monad.Trans.Reader (ReaderT)
 import Control.Monad.Reader.Class
 
+import Control.Monad.Trans.Writer (WriterT)
+
+
 import Control.Monad.Except (ExceptT)
 
 import Data.Map
@@ -51,25 +54,7 @@ type Knowledge = Map String Types.State
 -- | The type of the relations between the Exprs. They form rules.
 data Relation = Eq Expr Expr | Imply Expr Expr
 
-type Resolution a = ExceptT String (ReaderT [Relation] (S.State Knowledge)) a
-
-
-{-getKnowledge :: (MonadState s m) => m s
-getKnowledge = get
-
-
- quelle difference avec le modify normal
- modify :: MonadState s m => (s -> s) -> m ()
-modify f = state (\s -> ((), f s))
-
-modifyKnowledge :: MonadState s m => (s -> s) -> m ()
-modifyKnowledge = modify
-
-getRules :: (MonadReader r m) => m r
-getRules = ask
--}
-
-
+type Resolution a = WriterT String (ExceptT String (ReaderT [Relation] (S.State Knowledge))) a
 
 
 instance Eq Expr where
