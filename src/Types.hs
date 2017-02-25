@@ -48,14 +48,14 @@ data State = Unsolved Expr | True | False | Unprovable Expr
   deriving (Show, Eq)
 
 -- | Association of an Expr (Mostly a Fact) to a State
---type FactState = (Expr, Types.State)
-type Knowledge = Map String Types.State
+type Knowledge = Map String (Types.State, Proof)
 
 -- | The type of the relations between the Exprs. They form rules.
 data Relation = Eq Expr Expr | Imply Expr Expr
 
 type Resolution a = WriterT String (ExceptT String (ReaderT [Relation] (S.State Knowledge))) a
 
+data Proof = RuleProof [Relation] {-State-} | Known State | Tautology Relation Relation | Contradiction Relation Relation
 
 instance Eq Expr where
     (And a1 b1) == (And a2 b2) = cmpBinaryExprSides a1 a2 b1 b2

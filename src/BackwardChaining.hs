@@ -44,16 +44,18 @@ import Prelude hiding(lookup, filter)
 
 import Data.Map(insert, lookup, toList, fromList)
 
+
 resolveRules :: Expr -> Resolution T.State
 resolveRules goal = do
   rules <- ask
   let concernedRules = inferRules rules goal
-  let evalRule state relation = do
+  let evalRule (state, RuleProof log) (stack, relation) = do
         s <- state
         s' <- eval relation
-        if (s' == T.True) then tell ("rule " ++ show relation ++ " is right\n") else tell ""
-        return (s @| s')
-  foldl evalRule (return (Unsolved goal)) concernedRules
+        let log' = if (s' == T.True || s' == T.False) then log ++ stack else log
+        return ((s @| s'), RuleProof log)
+  foldl evalRule (return (Unsolved goal, RuleProof [])) concernedRules
+
 
 eval :: Relation -> Resolution T.State
 eval (lhs `Imply` rhs) = do
