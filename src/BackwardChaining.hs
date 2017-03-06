@@ -45,26 +45,26 @@ import Prelude hiding(lookup, filter)
 import Data.Map(insert, lookup, toList, fromList)
 
 
-resolveRules :: Expr -> Resolution T.State
+resolveRules :: Expr -> Resolution (T.State, Proof)
 resolveRules goal = do
   rules <- ask
   let concernedRules = inferRules rules goal
-  let evalRule (state, RuleProof log) (stack, relation) = do
+  let evalRule (state, RuleProof log) (_, relation) = do
         s <- state
-        s' <- eval relation
+        (s', RuleProof stack) <- eval relation
         let log' = if (s' == T.True || s' == T.False) then log ++ stack else log
-        return ((s @| s'), RuleProof log)
+        return ((s @| s'), RuleProof log')
   foldl evalRule (return (Unsolved goal, RuleProof [])) concernedRules
 
 
-eval :: Relation -> Resolution T.State
+eval :: Relation -> Resolution (T.State, Proof)
 eval (lhs `Imply` rhs) = do
   s <- evalExpr resolveFact lhs
   return (evalImplication rhs s)
 eval _ = error "Unreachable Code"
 
 
-evalGoal :: Expr -> Resolution T.State
+evalGoal :: Expr -> Resolution (T.State, Proof)
 evalGoal goal@(Fact c) = do
     modify (insert c (Unsolved goal))
     tell "\n"
@@ -74,14 +74,14 @@ evalGoal goal@(Fact c) = do
     either (throwError) (\s -> do {tell (c ++ " is " ++ show s ++ "\n") ; modify (insert c s) ; return s}) resultState
 
 
-resolveFact :: Expr -> Resolution T.State
+resolveFact :: Expr -> Resolution (T.State, Proof)
 resolveFact fact@(Fact c) = do
   tell ("searching " ++ c ++ " ")
   knowledge <- get
-  maybe (evalGoal fact) (\x -> do{tell (show x ++ "\n"); return x}) ( lookup c knowledge)
+  maybe (evalGoal fact) (\x -> return (x, Known x)) (lookup c knowledge)
 
 
-getStateOfQueries :: [Expr] -> Resolution [(String, State)]
+getStateOfQueries :: [Expr] -> Resolution [(String, (T.State, Proof))]
 getStateOfQueries queries = do
   mapM_ resolveFact queries
   knowledge <- get
@@ -93,9 +93,10 @@ resolve (rules, init, queries) =
   let knowledge = fromList init
       results = fst $ runState (runReaderT (runExceptT (runWriterT (getStateOfQueries queries))) rules) knowledge
   in
-  trace (show $ fmap snd results) (fmap fst results)
+  fmap fst results
+  --trace (show $ fmap snd results) (fmap fst results)
 
-resolve2 :: ([Relation], [(String, State)], [Expr]) -> Either String ([(String, State)], String)
+resolve2 :: ([Relation], [(String, State)], [Expr]) -> Either String [(String, (T.State, Proof) )]
 resolve2 (rules, init, queries) =
   let knowledge = fromList init
       results = fst $ runState (runReaderT (runExceptT (runWriterT (getStateOfQueries queries))) rules) knowledge
