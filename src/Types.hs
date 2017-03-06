@@ -12,6 +12,7 @@ module Types
   Relation(Eq, Imply),
   Init,
   Query,
+  Proof(..),
   Types.State(..),
   Knowledge,
   Resolution,
@@ -55,7 +56,11 @@ data Relation = Eq Expr Expr | Imply Expr Expr
 
 type Resolution a = WriterT String (ExceptT String (ReaderT [Relation] (S.State Knowledge))) a
 
-data Proof = RuleProof [Relation] {-State-} | Known State | Tautology Relation Relation | Contradiction Relation Relation
+data Proof = RuleProof [Relation] {-State-} |
+  Known Types.State |
+  Tautology [Relation] [Relation] |
+  Contradiction [Relation] [Relation] |
+  Invalid [Relation] [Relation]
 
 instance Eq Expr where
     (And a1 b1) == (And a2 b2) = cmpBinaryExprSides a1 a2 b1 b2
