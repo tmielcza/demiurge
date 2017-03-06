@@ -1,5 +1,5 @@
 module BackwardChaining (
-  resolve, resolve2
+  resolve2 {-, resolve-}
   ) where
 
 import Control.Monad.State.Class (
@@ -32,6 +32,8 @@ import Control.Monad.Except (
   runExceptT
   )
 
+import ReasoningVisualisation
+
 import Control.Monad.Trans.Class (lift)
 
 import Types as T
@@ -49,56 +51,59 @@ resolveRules :: Expr -> Resolution (T.State, Proof)
 resolveRules goal = do
   rules <- ask
   let concernedRules = inferRules rules goal
-  let evalRule (state, RuleProof log) (_, relation) = do
-        s <- state
-        (s', RuleProof stack) <- eval relation
-        let log' = if (s' == T.True || s' == T.False) then log ++ stack else log
-        return ((s @| s'), RuleProof log')
+  --evalRule :: Resolution (T.State, Proof) -> ([Relation], Relation) -> Resolution (T.State, Proof)
+  let evalRule {-(state, RuleProof log)-} resolution (ruleStack, relation) = do
+        (s, RuleProof log) <- resolution
+        s'<- eval relation
+        let log' = if (s' == T.True || s' == T.False) then log ++ ruleStack else log
+        let news = s @| s'
+        return (news, RuleProof log')
+        --return ((s @| s'), RuleProof log')
   foldl evalRule (return (Unsolved goal, RuleProof [])) concernedRules
 
 
-eval :: Relation -> Resolution (T.State, Proof)
+eval :: Relation -> Resolution T.State
 eval (lhs `Imply` rhs) = do
   s <- evalExpr resolveFact lhs
   return (evalImplication rhs s)
 eval _ = error "Unreachable Code"
 
 
-evalGoal :: Expr -> Resolution (T.State, Proof)
+evalGoal :: Expr -> Resolution T.State
 evalGoal goal@(Fact c) = do
-    modify (insert c (Unsolved goal))
-    tell "\n"
+    modify (insert c (Unsolved goal, RuleProof []))
     s <- resolveRules goal
     ns <- resolveRules (Not goal)
+    knowledge <- get
     let resultState = s `combineGoalAndOposite` ns
-    either (throwError) (\s -> do {tell (c ++ " is " ++ show s ++ "\n") ; modify (insert c s) ; return s}) resultState
+    either (throwError . showProof knowledge goal) (\(s, p) -> do{modify (insert c (s, p)); return s}) resultState
 
-
-resolveFact :: Expr -> Resolution (T.State, Proof)
+resolveFact :: Expr -> Resolution T.State
 resolveFact fact@(Fact c) = do
-  tell ("searching " ++ c ++ " ")
   knowledge <- get
-  maybe (evalGoal fact) (\x -> return (x, Known x)) (lookup c knowledge)
+  maybe (evalGoal fact) (\(st, _pr) -> return st) (lookup c knowledge)
 
 
 getStateOfQueries :: [Expr] -> Resolution [(String, (T.State, Proof))]
 getStateOfQueries queries = do
-  mapM_ resolveFact queries
   knowledge <- get
-  return $ [ x | x@(f, s) <- toList knowledge, elem (Fact f) queries]
+  mapM_ (resolveFact) queries
+  return $ toList knowledge
   --filterWithKey (\fact _ -> elem fact queries) (collectedKnowledge)
 
-resolve :: ([Relation], [(String, State)], [Expr]) -> Either String [(String, State)]
+
+
+{-resolve :: ([Relation], [(String, State)], [Expr]) -> Either String [(String, State)]
 resolve (rules, init, queries) =
   let knowledge = fromList init
       results = fst $ runState (runReaderT (runExceptT (runWriterT (getStateOfQueries queries))) rules) knowledge
   in
-  fmap fst results
+  fmap fst results-}
   --trace (show $ fmap snd results) (fmap fst results)
 
-resolve2 :: ([Relation], [(String, State)], [Expr]) -> Either String [(String, (T.State, Proof) )]
+resolve2 :: ([Relation], [(String, State)], [Expr]) -> Either String ([(String, (T.State, Proof) )], String)
 resolve2 (rules, init, queries) =
-  let knowledge = fromList init
+  let knowledge = fromList $ map (\(k, st) -> (k, (st, Known st))) init
       results = fst $ runState (runReaderT (runExceptT (runWriterT (getStateOfQueries queries))) rules) knowledge
   in
   results

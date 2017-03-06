@@ -40,11 +40,11 @@ evalImplication (Not rhs) Types.False = Unsolved rhs
 evalImplication rhs Types.False = Unsolved rhs -- problem expr dans rhs
 evalImplication _ state = state
 
-combineGoalAndOposite :: State -> State -> Either String State
-combineGoalAndOposite Types.True Types.True = Left "Incoherent rules and/or initial facts"
-combineGoalAndOposite _ Types.True = Right Types.False
-combineGoalAndOposite _ (Unprovable u) = Right (Unprovable u)
-combineGoalAndOposite (Unsolved _) _ = Right Types.False
+combineGoalAndOposite :: (State, Proof) -> (State, Proof) -> Either Proof (State, Proof)
+combineGoalAndOposite (Types.True, RuleProof g) (Types.True, RuleProof ng) = Left (Invalid g ng)
+combineGoalAndOposite _ (Types.True, ng) = Right (Types.False, ng)
+combineGoalAndOposite _ (Unprovable u, ng) = Right (Unprovable u, ng)
+combineGoalAndOposite (Unsolved _, g) _ = Right (Types.False, g) -- in the cases where we don't find any answer, the fact is considered a False
 combineGoalAndOposite goal _oposite = Right goal
 
 

@@ -32,8 +32,8 @@ infer stack@((premices `Imply` Not (lhs `Xor` rhs)):_) goal =
   infer ((premices `Imply` (Not (lhs `Or` rhs) `Or` (lhs `And` rhs))):stack) goal
 
 -- return the rule sent if the rhs is the fact we are looking for
-infer (r@(_ `Imply` fact):tail) goal
-  | goal == fact = [(tail, r)]
+infer list@(r@(_ `Imply` fact):_) goal
+  | goal == fact = [(list, r)]
  -- | Not goal == fact = [r]
   | otherwise    = []
 
