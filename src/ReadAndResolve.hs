@@ -12,14 +12,15 @@ parseFile path = do
   content <- readFile (path)
   return (parse content)
 
-readAndResolve :: String -> IO (Either String [(String, (State, Proof))])
+readAndResolve :: String -> IO (Either String String)
 readAndResolve filename = do
   parsed <- parseFile filename
   let resolution = parsed >>= resolve2
-  let ret = fmap fst resolution
-  either (print ) (putStr) (fmap snd resolution)
-  print (ret)
-  return (ret)
+  either putStr putStr resolution
+  return (resolution)
+
+{-
+Either String ([(String, (T.State, Proof) )], String)
 
 interactiveMode:: String -> IO ()
 interactiveMode filename = do
@@ -27,3 +28,4 @@ interactiveMode filename = do
   print (parsed >>= resolve)
   askForChange parsed
   return ()
+-}
