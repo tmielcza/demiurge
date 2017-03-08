@@ -104,6 +104,6 @@ resolve (rules, init, queries) =
 resolve2 :: ([Relation], [(String, State)], [Expr]) -> Either String ([(String, (T.State, Proof) )], String)
 resolve2 (rules, init, queries) =
   let knowledge = fromList $ map (\(k, st) -> (k, (st, Known st))) init
-      results = fst $ runState (runReaderT (runExceptT (runWriterT (getStateOfQueries queries))) rules) knowledge
+      results = fst $ runState (runReaderT (runExceptT (getStateOfQueries queries)) rules) knowledge
   in
   results
