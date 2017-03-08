@@ -32,23 +32,26 @@ getFacts f           = [f]
 
 showRulesTransformation :: [Relation] -> String
 showRulesTransformation list@(r:_) =
-  let intro = "the rule " ++ (show r) ++ "have been infered through this steps:"
+  let intro = "the rule " ++ (show r) ++ " have been infered through this steps:"
       transformations = foldr (\new prev -> prev ++ "\n\t" ++ show new) "" list
   in intro ++ transformations ++ "\n"
 
 rulesReasoning :: Knowledge -> [Relation] -> String
 rulesReasoning knowledge list@(rule@(lft `Imply` _):_)=
   let
-    rulesInference = showRulesTransformation list
-    showFactAndProof f (st, p) = "Fact "++ f ++ " is" ++ (show st) ++ ", here is the reasoning:\n" ++ showProof knowledge (Fact f) p
-    reasoning = foldl (\prev (Fact x) -> (getExistantInKnowledge knowledge x (showFactAndProof x)) ++ prev) "" (getFacts lft)
-    conclusion = "so the expr " ++ (show lft) ++ "is equal to " ++ showResolvedExpr knowledge lft
+    rulesInference = if (length list > 1) then showRulesTransformation list else ""
+    showSubgoal f (st, Known b) = "Fact "++ f ++ " has been initialised at " ++ (show st) ++ "\n"
+    showSubgoal f (st, p) = "Fact "++ f ++ " is " ++ (show st) ++ ", here is the reasoning:\n" ++ showProof knowledge (Fact f) p
+    reasoning = foldl (\prev (Fact x) -> (getExistantInKnowledge knowledge x (showSubgoal x)) ++ prev) "" (getFacts lft)
+    conclusion = "so the goal is equal to " ++ showResolvedExpr knowledge lft ++ "\n"
   in rulesInference ++ reasoning ++ conclusion
+
+rulesReasoning _ [] = "Unreachable Code, showProof check if the list is empty"
 
 
 showProof :: Knowledge -> Expr -> Proof -> String
 showProof knowledge goal (Invalid list1@(rule1:_) list2@(rule2:_)) =
-  "Two have different result for " ++ show goal ++ ":\n"++
+  "There are different results for " ++ show goal ++ ":\n"++
    rulesReasoning knowledge list1 ++ "\n" ++
    rulesReasoning knowledge list2 ++ "\n" ++
    show rule1 ++ " has a different result from " ++ show rule2 ++ "\n"
@@ -60,14 +63,14 @@ showProof knowledge goal (Tautology list@(rule:_) []) =
   "Their is a tautology in the rule " ++ show rule ++ rulesReasoning knowledge list
 
 showProof knowledge goal (RuleProof list@(rule:_)) =
-  "The rule used to get the result for" ++ show goal ++ "is: " ++
-  show rule ++ rulesReasoning knowledge list ++ "\n"
+  "The rule used to get the result for " ++ show goal ++ " is: " ++
+  show rule ++ "\n" ++ rulesReasoning knowledge list ++ "\n"
 
 showProof knowledge goal (RuleProof []) =
   "No rule match the goal " ++ show goal ++ "\n"
 
 showProof knowledge goal (Known st) =
-  "The goal " ++ show goal ++ " is initiate to " ++ show st ++ "\n"
+  "The fact " ++ show goal ++ " is initiate to " ++ show st ++ "\n"
 
 showFactResolution :: Knowledge -> Expr -> String
 showFactResolution k (Fact goal) =

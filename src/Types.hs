@@ -83,12 +83,12 @@ instance Show Relation where
     show (Imply e1 e2) = "{" ++ show e1 ++ "=>" ++ show e2 ++ "}"
     show (Eq e1 e2) = "{" ++ show e1 ++ "<=>" ++ show e2 ++ "}"
 
-instance Show Proof where
-  show (Invalid l1 l2) = "Invalid: " ++ show l1 ++ " vs " ++ show l2
-  show (Tautology l1 l2) = "Tautology: " ++ show l1 ++ " vs " ++ show l2
-  show (Contradiction l1 l2) = "Contradiction: " ++ show l1 ++ " vs " ++ show l2
-  show (RuleProof l) = "RuleProof: " ++ show l
-  show (Known s) = "Known: " ++ show s
+-- instance Show Proof where
+--   show (Invalid l1 l2) = "Invalid: " ++ show l1 ++ " vs " ++ show l2
+--   show (Tautology l1 l2) = "Tautology: " ++ show l1 ++ " vs " ++ show l2
+--   show (Contradiction l1 l2) = "Contradiction: " ++ show l1 ++ " vs " ++ show l2
+--   show (RuleProof l) = "RuleProof: " ++ show l
+--   show (Known s) = "Known: " ++ show s
 
 -- Functions of types
 
