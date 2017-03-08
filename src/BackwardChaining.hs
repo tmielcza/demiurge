@@ -46,19 +46,16 @@ import Prelude hiding(lookup, filter)
 
 import Data.Map(insert, lookup, toList, fromList)
 
-
 resolveRules :: Expr -> Resolution (T.State, Proof)
 resolveRules goal = do
   rules <- ask
   let concernedRules = inferRules rules goal
-  --evalRule :: Resolution (T.State, Proof) -> ([Relation], Relation) -> Resolution (T.State, Proof)
-  let evalRule {-(state, RuleProof log)-} resolution (ruleStack, relation) = do
+  let evalRule resolution (ruleStack, relation) = do
         (s, RuleProof log) <- resolution
         s'<- eval relation
         let log' = if (s' == T.True || s' == T.False) then log ++ ruleStack else log
         let news = s @| s'
         return (news, RuleProof log')
-        --return ((s @| s'), RuleProof log')
   foldl evalRule (return (Unsolved goal, RuleProof [])) concernedRules
 
 
@@ -83,25 +80,15 @@ resolveFact fact@(Fact c) = do
   knowledge <- get
   maybe (evalGoal fact) (\(st, _pr) -> return st) (lookup c knowledge)
 
-
-getStateOfQueries :: [Expr] -> Resolution [(String, (T.State, Proof))]
+getStateOfQueries :: [Expr] -> Resolution String
 getStateOfQueries queries = do
-  knowledge <- get
-  mapM_ (resolveFact) queries
-  return $ toList knowledge
-  --filterWithKey (\fact _ -> elem fact queries) (collectedKnowledge)
+    knowledge <- get
+    mapM_ (resolveFact) queries
+    collectedKnowledges <- get
+    let knowledgeToAnswer prev new = do{p <- prev; return (p ++ (showFactResolution collectedKnowledges new))}
+    foldl (knowledgeToAnswer) (return "") queries
 
-
-
-{-resolve :: ([Relation], [(String, State)], [Expr]) -> Either String [(String, State)]
-resolve (rules, init, queries) =
-  let knowledge = fromList init
-      results = fst $ runState (runReaderT (runExceptT (runWriterT (getStateOfQueries queries))) rules) knowledge
-  in
-  fmap fst results-}
-  --trace (show $ fmap snd results) (fmap fst results)
-
-resolve2 :: ([Relation], [(String, State)], [Expr]) -> Either String ([(String, (T.State, Proof) )], String)
+resolve2 :: ([Relation], [(String, State)], [Expr]) -> Either String String
 resolve2 (rules, init, queries) =
   let knowledge = fromList $ map (\(k, st) -> (k, (st, Known st))) init
       results = fst $ runState (runReaderT (runExceptT (getStateOfQueries queries)) rules) knowledge
