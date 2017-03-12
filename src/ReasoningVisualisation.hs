@@ -37,10 +37,10 @@ infixr 5 ++*
 {-pop :: KnowledgeState String -> KnowledgeState String -> KnowledgeState String
 pop e e2 = e `mplus` e2-}
 
-getExistantInKnowledge:: String -> ((State, Proof) -> String) -> (KnowledgeState String)
+getExistantInKnowledge:: String -> ((State, Proof) -> KnowledgeState String) -> (KnowledgeState String)
 getExistantInKnowledge fact func = do
   k <- S.get
-  maybe (return "Unreachable code") (return . func) (M.lookup fact k)
+  maybe (return "Unreachable code") (func) (M.lookup fact k)
 
 resolvedToString :: Expr -> Expr -> String -> KnowledgeState String
 resolvedToString e1 e2 opeSign = ("(" ++* showResolvedExpr e1) `mplus` (opeSign ++* showResolvedExpr e2 *++ ")")
@@ -57,7 +57,7 @@ showResolvedExpr (Xor e1 e2) = resolvedToString e1 e2 "^"
 showResolvedExpr (Or e1 e2) = resolvedToString e1 e2 "|"
 showResolvedExpr (And e1 e2) = resolvedToString e1 e2 "+"
 showResolvedExpr (Not e) =  showResolvedExpr e
-showResolvedExpr (Fact fact) = getExistantInKnowledge fact (\(st, _) -> show st)
+showResolvedExpr (Fact fact) = getExistantInKnowledge fact (\(st, _) -> (return . show) st)
 
 getFacts :: Expr -> [Expr]
 getFacts (Xor e1 e2) = getFacts e1 ++ getFacts e2
@@ -76,8 +76,8 @@ rulesReasoning :: [Relation] -> KnowledgeState String
 rulesReasoning list@(rule@(lft `Imply` _):_)=
   let
     rulesInference = if (length list > 1) then showRulesTransformation list else ""
-    showSubgoal f (st, Known b) = "Fact "++ f ++ " has been initialised at " ++ (show st) ++ "\n"
-    showSubgoal f (st, p) = ("Fact " ++ f ++ " is " ++ (show st) ++ ":\n") ++* (showProof (Fact f) p)
+    showSubgoal f (st, Known b) = return ("Fact "++ f ++ " has been initialised at " ++ (show st) ++ "\n")
+    showSubgoal f (st, p) = ("Fact " ++ f ++ " is " ++ (show st) ++ ":\n") ++* (showProof (Fact "P") p)
     reasoning = foldl (\prev (Fact x) -> (getExistantInKnowledge x (showSubgoal x)) `mplus` prev) (return "") (getFacts lft)
     conclusion = "so the goal is equal to " ++* (showResolvedExpr lft) *++ "\n"
   in rulesInference ++* reasoning `mplus` conclusion
@@ -112,8 +112,8 @@ runShowProof k g p = fst $ S.runState (showProof g p) k
 showFactResolution :: Knowledge -> Expr -> String
 showFactResolution k (Fact goal) =
   let
-    func :: (State, Proof) -> String
-    func (st, pr) = "We are looking for " ++ show goal ++  " here is its resolution: \n" ++
-                      runShowProof k (Fact goal) pr ++ "So " ++ show goal ++ " is " ++ show st ++ "\n"
+    func :: (State, Proof) -> KnowledgeState String
+    func (st, pr) = return ("We are looking for " ++ show goal ++  " here is its resolution: \n" ++
+                      runShowProof k (Fact goal) pr ++ "So " ++ show goal ++ " is " ++ show st ++ "\n")
   in fst $ S.runState (getExistantInKnowledge goal func) k
 
