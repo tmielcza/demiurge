@@ -1,6 +1,6 @@
 module ReasoningVisualisation(
   showFactResolution,
-  showProof
+  runShowProof
   ) where
 
 import Types(
@@ -10,18 +10,54 @@ import Types(
   Expr(..),
   Relation(..))
 
+import Control.Monad(MonadPlus(..))
+
 import Data.Map  as M (lookup)
+import qualified Control.Monad.Trans.State.Lazy   as S (State, get, runState)
 
+type KnowledgeState a = S.State Knowledge a
 
-getExistantInKnowledge:: Knowledge -> String -> ((State, Proof) -> String) -> String
-getExistantInKnowledge k fact func = maybe (show (Unsolved (Fact fact))) (func) (M.lookup fact k)
+addStringToLeftKnowledge :: (KnowledgeState String )-> String -> (KnowledgeState String)
+addStringToLeftKnowledge kn str = do
+  str2 <- kn
+  return (str2 ++ str)
 
-showResolvedExpr :: Knowledge -> Expr -> String
-showResolvedExpr k (Xor e1 e2) = "(" ++ showResolvedExpr k e1 ++ "^" ++ showResolvedExpr k e2 ++ ")"
-showResolvedExpr k (Or e1 e2) = "(" ++ showResolvedExpr k e1 ++ "|" ++ showResolvedExpr k e2 ++ ")"
-showResolvedExpr k (And e1 e2) = "(" ++ showResolvedExpr k e1 ++ "+" ++ showResolvedExpr k e2 ++ ")"
-showResolvedExpr k (Not e) = "!" ++ showResolvedExpr k e
-showResolvedExpr k (Fact fact) = getExistantInKnowledge k fact (\(st, _) -> show st)
+addStringToRightKnowledge :: String -> (KnowledgeState String) -> (KnowledgeState String)
+addStringToRightKnowledge str kn = do
+  str2 <- kn
+  return (str ++ str2)
+
+-- Operator with the Same precedence as the ++ used for the String
+-- The star is in the side of the knowledge
+infixr 5 *++
+(*++) = addStringToLeftKnowledge
+infixr 5 ++*
+(++*) = addStringToRightKnowledge
+
+{-pop :: KnowledgeState String -> KnowledgeState String -> KnowledgeState String
+pop e e2 = e `mplus` e2-}
+
+getExistantInKnowledge:: String -> ((State, Proof) -> String) -> (KnowledgeState String)
+getExistantInKnowledge fact func = do
+  k <- S.get
+  maybe (return "Unreachable code") (return . func) (M.lookup fact k)
+
+resolvedToString :: Expr -> Expr -> String -> KnowledgeState String
+resolvedToString e1 e2 opeSign = ("(" ++* showResolvedExpr e1) `mplus` (opeSign ++* showResolvedExpr e2 *++ ")")
+{--
+resolvedToString :: Expr -> Expr -> String -> KnowledgeState String
+resolvedToString e1 e2 opeSign = do
+  s1 <- showResolvedExpr e1
+  s2 <- showResolvedExpr e2
+  return ("(" ++ s1 ++ opeSign ++ s2 ++ ")")
+-}
+
+showResolvedExpr :: Expr  -> KnowledgeState String
+showResolvedExpr (Xor e1 e2) = resolvedToString e1 e2 "^"
+showResolvedExpr (Or e1 e2) = resolvedToString e1 e2 "|"
+showResolvedExpr (And e1 e2) = resolvedToString e1 e2 "+"
+showResolvedExpr (Not e) =  showResolvedExpr e
+showResolvedExpr (Fact fact) = getExistantInKnowledge fact (\(st, _) -> show st)
 
 getFacts :: Expr -> [Expr]
 getFacts (Xor e1 e2) = getFacts e1 ++ getFacts e2
@@ -36,45 +72,48 @@ showRulesTransformation list@(r:_) =
       transformations = foldr (\new prev -> prev ++ "\n\t" ++ show new) "" list
   in intro ++ transformations ++ "\n"
 
-rulesReasoning :: Knowledge -> [Relation] -> String
-rulesReasoning knowledge list@(rule@(lft `Imply` _):_)=
+rulesReasoning :: [Relation] -> KnowledgeState String
+rulesReasoning list@(rule@(lft `Imply` _):_)=
   let
     rulesInference = if (length list > 1) then showRulesTransformation list else ""
     showSubgoal f (st, Known b) = "Fact "++ f ++ " has been initialised at " ++ (show st) ++ "\n"
-    showSubgoal f (st, p) = "Fact "++ f ++ " is " ++ (show st) ++ ", here is the reasoning:\n" ++ showProof knowledge (Fact f) p
-    reasoning = foldl (\prev (Fact x) -> (getExistantInKnowledge knowledge x (showSubgoal x)) ++ prev) "" (getFacts lft)
-    conclusion = "so the goal is equal to " ++ showResolvedExpr knowledge lft ++ "\n"
-  in rulesInference ++ reasoning ++ conclusion
+    showSubgoal f (st, p) = ("Fact " ++ f ++ " is " ++ (show st) ++ ":\n") ++* (showProof (Fact f) p)
+    reasoning = foldl (\prev (Fact x) -> (getExistantInKnowledge x (showSubgoal x)) `mplus` prev) (return "") (getFacts lft)
+    conclusion = "so the goal is equal to " ++* (showResolvedExpr lft) *++ "\n"
+  in rulesInference ++* reasoning `mplus` conclusion
 
-rulesReasoning _ [] = "Unreachable Code, showProof check if the list is empty"
+rulesReasoning [] = return "Unreachable Code, showProof check if the list is empty"
 
 
-showProof :: Knowledge -> Expr -> Proof -> String
-showProof knowledge goal (Invalid list1@(rule1:_) list2@(rule2:_)) =
-  "There are different results for " ++ show goal ++ ":\n"++
-   rulesReasoning knowledge list1 ++ "\n" ++
-   rulesReasoning knowledge list2 ++ "\n" ++
-   show rule1 ++ " has a different result from " ++ show rule2 ++ "\n"
+showProof :: Expr -> Proof -> KnowledgeState String
+showProof goal (Invalid list1@(rule1:_) list2@(rule2:_)) =
+  (("There are different results for " ++ show goal ++ ":\n" ++ show rule1 ++ "\n") ++* rulesReasoning list1 *++ (show rule2 ++ "\n")) `mplus`
+   rulesReasoning list2 *++ (show rule1 ++ " has a different result from " ++ show rule2 ++ "\n")
 
-showProof knowledge goal (Contradiction list@(rule:_) []) =
-  "Their is a contradiction in the rule " ++ show rule ++ rulesReasoning knowledge list
+showProof goal (Contradiction list@(rule:_) []) =
+  ("Their is a contradiction in the rule " ++ show rule) ++* rulesReasoning list
 
-showProof knowledge goal (Tautology list@(rule:_) []) =
-  "Their is a tautology in the rule " ++ show rule ++ rulesReasoning knowledge list
+showProof goal (Tautology list@(rule:_) []) =
+  ("Their is a tautology in the rule " ++ show rule) ++* rulesReasoning list
 
-showProof knowledge goal (RuleProof list@(rule:_)) =
-  "The rule used to get the result for " ++ show goal ++ " is: " ++
-  show rule ++ "\n" ++ rulesReasoning knowledge list ++ "\n"
+showProof goal (RuleProof list@(rule:_)) =
+  ("The rule used for " ++ show goal ++ " is: " ++
+     show rule ++ "\n") ++* rulesReasoning list *++ "\n"
 
-showProof knowledge goal (RuleProof []) =
-  "No rule match the goal " ++ show goal ++ "\n"
+showProof goal (RuleProof []) =
+  return $ "No rule match the goal " ++ show goal ++ "\n"
 
-showProof knowledge goal (Known st) =
-  "The fact " ++ show goal ++ " is initiate to " ++ show st ++ "\n"
+showProof goal (Known st) =
+  return $ "The fact " ++ show goal ++ " is initiate to " ++ show st ++ "\n"
+
+runShowProof :: Knowledge -> Expr -> Proof -> String
+runShowProof k g p = fst $ S.runState (showProof g p) k
 
 showFactResolution :: Knowledge -> Expr -> String
 showFactResolution k (Fact goal) =
-  let func (st, pr) = "We are looking for " ++ show goal ++  " here is its resolution: \n" ++
-                      showProof k (Fact goal) pr ++ "So " ++ show goal ++ " is " ++ show st ++ "\n"
-  in getExistantInKnowledge k goal func
+  let
+    func :: (State, Proof) -> String
+    func (st, pr) = "We are looking for " ++ show goal ++  " here is its resolution: \n" ++
+                      runShowProof k (Fact goal) pr ++ "So " ++ show goal ++ " is " ++ show st ++ "\n"
+  in fst $ S.runState (getExistantInKnowledge goal func) k
 
