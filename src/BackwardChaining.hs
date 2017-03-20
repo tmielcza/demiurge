@@ -53,7 +53,7 @@ resolveRules goal = do
   let evalRule resolution (ruleStack, relation) = do
         (s, RuleProof log) <- resolution
         s'<- eval relation
-        let log' = if (s' == T.True || s' == T.False) then log ++ ruleStack else log
+        let log' = if (s' == T.True || s' == T.False) then ruleStack else log
         let news = s @| s'
         return (news, RuleProof log')
   foldl evalRule (return (Unsolved goal, RuleProof [])) concernedRules
