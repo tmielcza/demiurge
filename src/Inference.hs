@@ -38,13 +38,14 @@ infer list@(r@(_ `Imply` fact):_) goal
   | otherwise    = []
 
 
+launchInferences :: Relation -> Expr -> [([Relation], Relation)]
 --modus tollens or transposition
-launchInferences ( lhs `Imply` rhs) goal =
+launchInferences (lhs `Imply` rhs) goal =
   infer [( lhs `Imply` rhs)] goal ++ infer [( Not rhs `Imply` Not lhs)] goal
 
 -- distribution of Equivalence in implications
 launchInferences (rhs `Eq` lhs) goal =
   launchInferences (rhs `Imply` lhs) goal ++ launchInferences (lhs `Imply` rhs) goal
 
--- inferRules :: [Relation] -> Expr -> [([Relation], Relation)]
+inferRules :: [Relation] -> Expr -> [([Relation], Relation)]
 inferRules rules goal = foldr (\r -> (++) (launchInferences r goal)) [] rules
