@@ -17,22 +17,27 @@ import qualified Control.Monad.Trans.State.Lazy   as S (State, get, runState)
 
 type KnowledgeState a = S.State Knowledge a
 
-addStringToLeftKnowledge :: (KnowledgeState String )-> String -> (KnowledgeState String)
-addStringToLeftKnowledge kn str = do
-  str2 <- kn
-  return (str2 ++ str)
+infixr 5 *++*
+(*++*) :: (KnowledgeState String )-> (KnowledgeState String ) -> (KnowledgeState String)
+(*++*) kn1 kn2 = do
+  str1 <- kn1
+  str2 <- kn2
+  return (str1 ++ str2)
 
-addStringToRightKnowledge :: String -> (KnowledgeState String) -> (KnowledgeState String)
-addStringToRightKnowledge str kn = do
-  str2 <- kn
-  return (str ++ str2)
-
+-- concat a string with a knowledgeState string
 -- Operator with the Same precedence as the ++ used for the String
 -- The star is in the side of the knowledge
 infixr 5 *++
-(*++) = addStringToLeftKnowledge
+(*++) :: (KnowledgeState String )-> String -> (KnowledgeState String)
+(*++) kn str = do
+  str2 <- kn
+  return (str2 ++ str)
+
+(++*) :: String -> (KnowledgeState String) -> (KnowledgeState String)
 infixr 5 ++*
-(++*) = addStringToRightKnowledge
+(++*) str kn = do
+  str2 <- kn
+  return (str ++ str2)
 
 {-pop :: KnowledgeState String -> KnowledgeState String -> KnowledgeState String
 pop e e2 = e `mplus` e2-}

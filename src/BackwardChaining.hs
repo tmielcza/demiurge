@@ -73,7 +73,7 @@ evalGoal goal@(Fact c) = do
     ns <- resolveRules (Not goal)
     knowledge <- get
     let resultState = s `combineGoalAndOposite` ns
-    either (throwError . showProof knowledge goal) (\(s, p) -> do{modify (insert c (s, p)); return s}) resultState
+    either (throwError . runShowProof knowledge goal) (\(s, p) -> do{modify (insert c (s, p)); return s}) resultState
 
 resolveFact :: Expr -> Resolution T.State
 resolveFact fact@(Fact c) = do
