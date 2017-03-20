@@ -1,4 +1,4 @@
 #false dans tous les cas
-A + C => !C
+C => A
 =!A
 ?C
