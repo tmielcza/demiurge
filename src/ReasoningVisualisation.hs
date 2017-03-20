@@ -48,7 +48,7 @@ getExistantInKnowledge fact func = do
   maybe (return "Unreachable code") (func) (M.lookup fact k)
 
 resolvedToString :: Expr -> Expr -> String -> KnowledgeState String
-resolvedToString e1 e2 opeSign = ("(" ++* showResolvedExpr e1) `mplus` (opeSign ++* showResolvedExpr e2 *++ ")")
+resolvedToString e1 e2 opeSign = ("(" ++* showResolvedExpr e1) *++* (opeSign ++* showResolvedExpr e2 *++ ")")
 {--
 resolvedToString :: Expr -> Expr -> String -> KnowledgeState String
 resolvedToString e1 e2 opeSign = do
@@ -83,16 +83,16 @@ rulesReasoning list@(rule@(lft `Imply` _):_)=
     rulesInference = if (length list > 1) then showRulesTransformation list else ""
     showSubgoal f (st, Known b) = return ("Fact "++ f ++ " has been initialised at " ++ (show st) ++ "\n")
     showSubgoal f (st, p) = ("Fact " ++ f ++ " is " ++ (show st) ++ ":\n") ++* (showProof (Fact "P") p)
-    reasoning = foldl (\prev (Fact x) -> (getExistantInKnowledge x (showSubgoal x)) `mplus` prev) (return "") (getFacts lft)
+    reasoning = foldl (\prev (Fact x) -> (getExistantInKnowledge x (showSubgoal x)) *++* prev) (return "") (getFacts lft)
     conclusion = "so the goal is equal to " ++* (showResolvedExpr lft) *++ "\n"
-  in rulesInference ++* reasoning `mplus` conclusion
+  in rulesInference ++* reasoning *++* conclusion
 
 rulesReasoning [] = return "Unreachable Code, showProof check if the list is empty"
 
 
 showProof :: Expr -> Proof -> KnowledgeState String
 showProof goal (Invalid list1@(rule1:_) list2@(rule2:_)) =
-  (("There are different results for " ++ show goal ++ ":\n" ++ show rule1 ++ "\n") ++* rulesReasoning list1 *++ (show rule2 ++ "\n")) `mplus`
+  (("There are different results for " ++ show goal ++ ":\n" ++ show rule1 ++ "\n") ++* rulesReasoning list1 *++ (show rule2 ++ "\n")) *++*
    rulesReasoning list2 *++ (show rule1 ++ " has a different result from " ++ show rule2 ++ "\n")
 
 showProof goal (Contradiction list@(rule:_) []) =
@@ -106,7 +106,7 @@ showProof goal (RuleProof list@(rule:_)) =
      show rule ++ "\n") ++* rulesReasoning list *++ "\n"
 
 showProof goal (RuleProof []) =
-  return $ "No rule match the goal " ++ show goal ++ "\n"
+  return $ "No rule matches the goal " ++ show goal ++ "\n"
 
 showProof goal (Known st) =
   return $ "The fact " ++ show goal ++ " is initiate to " ++ show st ++ "\n"
