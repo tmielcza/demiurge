@@ -53,18 +53,19 @@ resolveRules goal = do
   let evalRule resolution (ruleStack, relation) = do
         (s, RuleProof log) <- resolution
         s'<- eval relation
-        let log' = if (s' == T.True || s' == T.False) then ruleStack else log
+        let log' = case s' of Unsolved _ -> log
+                              otherwise  -> ruleStack
         let news = s @| s'
-        return (news, RuleProof log')
+        case log of
+          [] -> return (s', RuleProof ruleStack)
+          otherwise -> return (news, RuleProof log')
   foldl evalRule (return (Unsolved goal, RuleProof [])) concernedRules
-
 
 eval :: Relation -> Resolution T.State
 eval (lhs `Imply` rhs) = do
   s <- evalExpr resolveFact lhs
   return (evalImplication rhs s)
 eval _ = error "Unreachable Code"
-
 
 evalGoal :: Expr -> Resolution T.State
 evalGoal goal@(Fact c) = do
