@@ -72,7 +72,7 @@ rulesReasoning list@(rule@(lft `Imply` _):_)=
   let
     rulesInference = if (length list > 1) then showRulesTransformation list else ""
     showSubgoal f (st, Known b) = return ("Fact "++ f ++ " has been initialised at " ++ (show st) ++ "\n")
-    showSubgoal f (st, p) = ("Fact " ++ f ++ " is " ++ (show st) ++ ":\n") ++* (showProof (Fact "P") p)
+    showSubgoal f (st, p) = ("Fact " ++ f ++ " is " ++ (show st) ++ ":\n") ++* (showProof (Fact f) p)
     reasoning = foldl (\prev (Fact x) -> (getExistantInKnowledge x (showSubgoal x)) *++* prev) (return "") (getFacts lft)
     conclusion = "so the goal is equal to " ++* (showResolvedExpr lft) *++ "\n"
   in rulesInference ++* reasoning *++* conclusion
