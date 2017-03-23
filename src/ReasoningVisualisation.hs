@@ -39,29 +39,19 @@ infixr 5 ++*
   str2 <- kn
   return (str ++ str2)
 
-{-pop :: KnowledgeState String -> KnowledgeState String -> KnowledgeState String
-pop e e2 = e `mplus` e2-}
-
-getExistantInKnowledge:: String -> ((State, Proof) -> KnowledgeState String) -> (KnowledgeState String)
+getExistantInKnowledge:: String -> ((State, Proof) -> KnowledgeState String) -> KnowledgeState String
 getExistantInKnowledge fact func = do
   k <- S.get
   maybe (return "Unreachable code") (func) (M.lookup fact k)
 
 resolvedToString :: Expr -> Expr -> String -> KnowledgeState String
 resolvedToString e1 e2 opeSign = ("(" ++* showResolvedExpr e1) *++* (opeSign ++* showResolvedExpr e2 *++ ")")
-{--
-resolvedToString :: Expr -> Expr -> String -> KnowledgeState String
-resolvedToString e1 e2 opeSign = do
-  s1 <- showResolvedExpr e1
-  s2 <- showResolvedExpr e2
-  return ("(" ++ s1 ++ opeSign ++ s2 ++ ")")
--}
 
 showResolvedExpr :: Expr  -> KnowledgeState String
 showResolvedExpr (Xor e1 e2) = resolvedToString e1 e2 "^"
 showResolvedExpr (Or e1 e2) = resolvedToString e1 e2 "|"
 showResolvedExpr (And e1 e2) = resolvedToString e1 e2 "+"
-showResolvedExpr (Not e) =  showResolvedExpr e
+showResolvedExpr (Not e) = "!" ++* showResolvedExpr e
 showResolvedExpr (Fact fact) = getExistantInKnowledge fact (\(st, _) -> (return . show) st)
 
 getFacts :: Expr -> [Expr]
