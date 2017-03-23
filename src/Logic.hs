@@ -19,7 +19,6 @@ class Logical a where
   (@^) :: a -> a -> a
   lhs @^ rhs = (lhs @| rhs) @+ not (lhs @+ rhs)
 
-
 conjunctionContainsInverseExpr :: Expr -> Expr -> Bool
 conjunctionContainsInverseExpr goal (lhs `And` rhs) =
   conjunctionContainsInverseExpr goal lhs || conjunctionContainsInverseExpr goal rhs
@@ -85,8 +84,8 @@ instance Logical State where
   _ @| True = True
   False @| b = b
   a @| False = a
-  Unprovable a @| Unsolved b = compareExprInOr Unsolved a b
-  Unsolved a @| Unprovable b = compareExprInOr Unsolved a b
+  Unprovable a @| Unsolved b = compareExprInOr Unprovable a b
+  Unsolved a @| Unprovable b = compareExprInOr Unprovable a b
   Unprovable a @| Unprovable b = compareExprInOr Unprovable a b
   Unsolved a @| Unsolved b = compareExprInOr Unsolved a b
 
