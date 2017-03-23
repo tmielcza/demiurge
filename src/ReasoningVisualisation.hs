@@ -12,8 +12,8 @@ import Types(
 
 import Control.Monad(MonadPlus(..))
 
-import Data.Map  as M (lookup)
-import qualified Control.Monad.Trans.State.Lazy   as S (State, get, runState)
+import Data.Map  as M (lookup, insert)
+import qualified Control.Monad.Trans.State.Lazy as S(State(..), get, runState, modify)
 
 type KnowledgeState a = S.State Knowledge a
 
@@ -89,27 +89,40 @@ rulesReasoning list@(rule@(lft `Imply` _):_)=
 
 rulesReasoning [] = return "Unreachable Code, showProof check if the list is empty"
 
+-- Here it's mandatory to return a string because getExistantKnowledge returns a string
+setAsKnown:: Expr -> KnowledgeState String
+setAsKnown (Fact f) =
+  getExistantInKnowledge f (\(state, _proof) -> do { S.modify (M.insert f (state, Known state)); return f})
+
 
 showProof :: Expr -> Proof -> KnowledgeState String
-showProof goal (Invalid list1@(rule1:_) list2@(rule2:_)) =
+showProof goal (Invalid list1@(rule1:_) list2@(rule2:_)) = do
+  setAsKnown goal;
   (("There are different results for " ++ show goal ++ ":\n" ++ show rule1 ++ "\n") ++* rulesReasoning list1 *++ (show rule2 ++ "\n")) *++*
    rulesReasoning list2 *++ (show rule1 ++ " has a different result from " ++ show rule2 ++ "\n")
 
-showProof goal (Contradiction list@(rule:_) []) =
+showProof goal (Contradiction list@(rule:_) []) = do
+  setAsKnown goal;
   ("Their is a contradiction in the rule " ++ show rule) ++* rulesReasoning list
 
-showProof goal (Tautology list@(rule:_) []) =
+showProof goal (Tautology list@(rule:_) []) = do
+  setAsKnown goal;
   ("Their is a tautology in the rule " ++ show rule) ++* rulesReasoning list
 
-showProof goal (RuleProof list@(rule:_)) =
+showProof goal (RuleProof list@(rule:_)) = do
+  setAsKnown goal;
   ("The rule used for " ++ show goal ++ " is: " ++
      show rule ++ "\n") ++* rulesReasoning list *++ "\n"
 
-showProof goal (RuleProof []) =
+showProof goal (RuleProof []) = do
+  setAsKnown goal;
   return $ "No rule matches the goal " ++ show goal ++ "\n"
 
-showProof goal (Known st) =
-  return $ "The fact " ++ show goal ++ " is initiate to " ++ show st ++ "\n"
+showProof goal (Known st) = do
+  setAsKnown goal;
+  return $ "The fact " ++ show goal ++ " is known as " ++ show st ++ "\n"
+
+--showProof goal kn = return ("$$$$" ++ show kn)
 
 runShowProof :: Knowledge -> Expr -> Proof -> String
 runShowProof k g p = fst $ S.runState (showProof g p) k
