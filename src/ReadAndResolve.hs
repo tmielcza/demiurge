@@ -10,7 +10,10 @@ import Debug.Trace
 
 parseFile :: String -> IO (Either String ([Relation], Init, Query))
 parseFile path = do
+  putStrLn "___FILE____________"
   content <- readFile (path)
+  putStrLn content
+  putStrLn "___RESOLUTION______"
   return (parse content)
 
 readAndResolve :: String -> Bool -> IO (String)
