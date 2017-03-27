@@ -61,6 +61,7 @@ data Proof = RuleProof [Relation] {-State-} |
   Tautology [Relation] [Relation] |
   Contradiction [Relation] [Relation] |
   Invalid [Relation] [Relation]
+    deriving (Show)
 
 instance Eq Expr where
     (And a1 b1) == (And a2 b2) = cmpBinaryExprSides a1 a2 b1 b2

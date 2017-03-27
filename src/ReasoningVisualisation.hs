@@ -117,11 +117,11 @@ showProof goal (Known st) = do
 runShowProof :: Knowledge -> Expr -> Proof -> String
 runShowProof k g p = fst $ S.runState (showProof g p) k
 
-showFactResolution :: Knowledge -> Expr -> String
+showFactResolution :: Knowledge -> Expr -> (String, Knowledge)
 showFactResolution k (Fact goal) =
   let
     func :: (State, Proof) -> KnowledgeState String
     func (st, pr) = return ("We are looking for " ++ show goal ++  " here is its resolution: \n" ++
                       runShowProof k (Fact goal) pr ++ "So " ++ show goal ++ " is " ++ show st ++ "\n")
-  in fst $ S.runState (getExistantInKnowledge goal func) k
+  in S.runState (getExistantInKnowledge goal func) k
 

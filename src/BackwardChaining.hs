@@ -1,5 +1,5 @@
 module BackwardChaining (
-  resolve2 {-, resolve-}
+  resolve
   ) where
 
 import Control.Monad.State.Class (
@@ -81,17 +81,15 @@ resolveFact fact@(Fact c) = do
   knowledge <- get
   maybe (evalGoal fact) (\(st, _pr) -> return st) (lookup c knowledge)
 
-getStateOfQueries :: [Expr] -> Resolution String
+getStateOfQueries :: [Expr] -> Resolution Knowledge
 getStateOfQueries queries = do
     knowledge <- get
     mapM_ (resolveFact) queries
     collectedKnowledges <- get
-    let knowledgeToAnswer prev new = do{p <- prev; return (p ++ (showFactResolution collectedKnowledges new))}
-    foldl (knowledgeToAnswer) (return "") queries
+    return collectedKnowledges
 
-resolve2 :: ([Relation], [(String, State)], [Expr]) -> Either String String
-resolve2 (rules, init, queries) =
+resolve :: ([Relation], [(String, State)], [Expr]) -> Either String Knowledge
+resolve (rules, init, queries) =
   let knowledge = fromList $ map (\(k, st) -> (k, (st, Known st))) init
       results = fst $ runState (runReaderT (runExceptT (getStateOfQueries queries)) rules) knowledge
-  in
-  results
+  in results
