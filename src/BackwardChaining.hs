@@ -54,11 +54,11 @@ resolveRules goal = do
         (s, RuleProof log) <- resolution
         s'<- eval relation
         let log' = case s' of Unsolved _ -> log
-                              otherwise  -> ruleStack
+                              _ -> ruleStack
         let news = s @| s'
         case log of
           [] -> return (s', RuleProof ruleStack)
-          otherwise -> return (news, RuleProof log')
+          _ -> return (news, RuleProof log')
   foldl evalRule (return (Unsolved goal, RuleProof [])) concernedRules
 
 eval :: Relation -> Resolution T.State
@@ -83,7 +83,6 @@ resolveFact fact@(Fact c) = do
 
 getStateOfQueries :: [Expr] -> Resolution Knowledge
 getStateOfQueries queries = do
-    knowledge <- get
     mapM_ (resolveFact) queries
     collectedKnowledges <- get
     return collectedKnowledges
