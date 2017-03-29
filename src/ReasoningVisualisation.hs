@@ -74,7 +74,7 @@ rulesReasoning list@(rule@(lft `Imply` _):_)=
     showSubgoal f (_st, Known b) = return ("Fact "++ f ++ " is known as " ++ (show b) ++ "\n")
     showSubgoal f (st, p) = ("Fact " ++ f ++ " is " ++ (show st) ++ ":\n") ++* (consumeProof (Fact f) p)
     reasoning = foldl (\prev (Fact x) -> (getExistantInKnowledge x (showSubgoal x)) *++* prev) (return "") (getFacts lft)
-    conclusion = "so the goal is equal to " ++* (showResolvedExpr lft) *++ "\n"
+    conclusion = ("so the rule " ++ show lft  ++ " matches ") ++* (showResolvedExpr lft)
   in rulesInference ++* reasoning *++* conclusion
 
 rulesReasoning [] = return "Unreachable Code, showProof check if the list is empty"
@@ -125,8 +125,10 @@ runShowProof k g p = fst $ S.runState (consumeProof g p) k
 showFactResolution :: Knowledge -> Expr -> (String, Knowledge)
 showFactResolution k (Fact goal) =
   let
-    func :: (State, Proof) -> KnowledgeState String
-    func (st, pr) = return ("We are looking for " ++ show goal ++  " here is its resolution: \n" ++
-                      runShowProof k (Fact goal) pr ++ "So " ++ show goal ++ " is " ++ show st ++ "\n")
-  in S.runState (getExistantInKnowledge goal func) k
+    goalBlock :: (State, Proof) -> KnowledgeState String
+    goalBlock (st, pr) = do
+      str <- consumeProof (Fact goal) pr
+      return ("We are looking for " ++ show goal ++  " here is its resolution: \n" ++
+                      str ++ "So " ++ show goal ++ " is " ++ show st ++ "\n\n")
+  in S.runState (getExistantInKnowledge goal goalBlock) k
 
