@@ -10,6 +10,10 @@ infer stack@((premices `Imply` (lhs `And` rhs)):_) goal =
   infer ((premices `Imply` rhs):stack) goal ++
   infer ((premices `Imply` lhs):stack) goal
 
+infer stack@(((lhs `Or` rhs) `Imply` conclusion):_) goal =
+  infer ((lhs `Imply` conclusion):stack) goal ++
+  infer ((rhs `Imply` conclusion):stack) goal
+
 infer stack@((premices `Imply` (lhs `Or` rhs)):_) goal =
   infer (((premices `And` Not lhs) `Imply` rhs):stack) goal ++
   infer (((premices `And` Not rhs) `Imply` lhs):stack) goal
