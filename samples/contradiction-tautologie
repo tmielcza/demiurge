@@ -1,0 +1,6 @@
+Enfaitcestfaux => !Enfaitcestfaux
+!Enfaitcestfaux => F
+!Tropvrai => Tropvrai
+Tropvrai => P
+=
+?EnfaitcestfauxFTropvraiP

@@ -42,6 +42,8 @@ import Inference
 
 import Logic
 
+import Debug.Trace
+
 import Prelude hiding(lookup, filter)
 
 import Data.Map(insert, lookup, toList, fromList)
@@ -64,7 +66,7 @@ resolveRules goal = do
 eval :: Relation -> Resolution T.State
 eval (lhs `Imply` rhs) = do
   s <- evalExpr resolveFact lhs
-  return (evalImplication rhs s)
+  trace ("rhs => " ++ show rhs ++ " / result => " ++ show s)(return (evalImplication rhs s))
 eval _ = error "Unreachable Code"
 
 evalGoal :: Expr -> Resolution T.State

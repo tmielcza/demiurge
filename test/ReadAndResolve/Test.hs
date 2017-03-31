@@ -25,13 +25,10 @@ fileSuite = testGroup "Files tests"
               resolveFileTest "samples/invalid" "The rules {B => E} and {C => !E} have different results for the goal E"",
               resolveFileTest "samples/subject" "The rules {(A + B) => C} and {(A + B) => !C} have different results for the goal C"
 
-              {-resolveFileTest "samples/test1" (Right [
-                ("B", Unprovable (Not(Not(Fact "D")) `And` (Not(Fact "B")))),
-                ("D", Unprovable (Not(Not(Fact "D")) `And` (Not(Fact "B"))))
-                 ]),
-
-              resolveFileTest "samples/test2" (Right [("Y", True)]),
+              resolveFileTest "samples/test1" "The fact B is Unprovable\nThe fact D is Unprovable ",
+              resolveFileTest "samples/test2" (answer "Y" "True"),
               resolveFileTest "samples/equivalence" (Right [("A", False), ("C", False), ("D", True)]),
+{-
               resolveFileTest "samples/testAnonA" (Right [("Enfaitcestfaux", False)]),
               resolveFileTest "samples/transposition" (Right [("R", True)]),
               resolveFileTest "samples/unso" (Right [("Reponsefaux", False)]),

@@ -9,7 +9,7 @@ module Logic
 
 import Types
 import Prelude hiding (not, True, False)
-
+import Debug.Trace
 
 class Logical a where
   (@|) :: a -> a -> a
@@ -24,20 +24,21 @@ conjunctionContainsInverseExpr goal (lhs `And` rhs) =
   conjunctionContainsInverseExpr goal lhs || conjunctionContainsInverseExpr goal rhs
 conjunctionContainsInverseExpr goal expr = goal == Not expr || Not goal == expr
 
+debug str rhs expr ret = trace (str ++ " " ++ show rhs ++ " " ++ show expr) ret
+
 evalImplication :: Expr -> State -> State
 evalImplication (Not rhs)  (Unsolved expr)
-  | conjunctionContainsInverseExpr (Not rhs) expr = Unsolved expr -- Q: When is it run ?
-  | expr == rhs = Types.True -- a => !a
-  | otherwise =  Unsolved expr
+  | expr == rhs = debug ("pop") (Not rhs)  (Unsolved expr) (Types.True) -- a => !a
+  | otherwise =  debug "yyy1= " (Not rhs)  (Unsolved expr) (Unsolved expr)
 evalImplication rhs  (Unsolved (Not expr))
-  | expr == rhs = Types.True -- !a => a
-  | otherwise =  Unprovable (Not expr) -- !b => a
+  | expr == rhs = debug  "youp" rhs  (Unsolved (Not expr)) (Types.True) -- !a => a
+  | otherwise = debug  "eeee" rhs  (Unsolved (Not expr)) (Types.True)-- !b => a
 evalImplication rhs  (Unsolved expr)
-  | conjunctionContainsInverseExpr rhs expr = Unprovable expr
-evalImplication (Not _) Types.True = Types.True
-evalImplication (Not rhs) Types.False = Unsolved rhs
-evalImplication rhs Types.False = Unsolved rhs -- problem expr dans rhs
-evalImplication _ state = state
+  | conjunctionContainsInverseExpr rhs expr = debug "trace"  rhs  (Unsolved expr) (Unprovable expr)
+evalImplication rhs@(Not _) Types.True =debug "efw" rhs Types.True Types.True
+evalImplication (Not rhs) Types.False = debug "444" (Not rhs) Types.False (Unsolved rhs)
+evalImplication rhs Types.False = debug "fw" rhs Types.False (Unsolved rhs) -- problem expr dans rhs
+evalImplication rhs state = debug "des" rhs state state
 
 combineGoalAndOposite :: (State, Proof) -> (State, Proof) -> Either Proof (State, Proof)
 combineGoalAndOposite (Types.True, RuleProof g) (Types.True, RuleProof ng) = Left (Invalid g ng)

@@ -46,7 +46,7 @@ data Expr = Xor Expr Expr |
             Not Expr
 
 data State = Unsolved Expr | True | False | Unprovable Expr
-  deriving (Show, Eq)
+  deriving (Eq, Show)
 
 -- | Association of an Expr (Mostly a Fact) to a State
 type Knowledge = Map String (Types.State, Proof)
@@ -62,6 +62,12 @@ data Proof = RuleProof [Relation] {-State-} |
   Contradiction [Relation] [Relation] |
   Invalid [Relation] [Relation]
     deriving (Show)
+
+{-instance Show Types.State where
+  show (Unprovable _)= "Unprovable"
+  show (Unsolved _)= "Unsolved"
+  show True = "True"
+  show False = "False"-}
 
 instance Eq Expr where
     (And a1 b1) == (And a2 b2) = cmpBinaryExprSides a1 a2 b1 b2

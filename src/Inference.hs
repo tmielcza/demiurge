@@ -45,8 +45,9 @@ infer list@(r@(_ `Imply` fact):_) goal
 launchInferences :: [Relation] -> Expr -> [([Relation], Relation)]
 --modus tollens or transposition
 -- here the xs is the possible equivalence (or an empty list)
-launchInferences ((lhs `Imply` rhs):xs) goal =
-  infer (( lhs `Imply` rhs):xs) goal ++ infer (( Not rhs `Imply` Not lhs):xs) goal
+launchInferences list@((lhs `Imply` rhs):xs) goal
+  | rhs == Not lhs = infer (( lhs `Imply` rhs):xs) goal
+  | otherwise = infer (( lhs `Imply` rhs):xs) goal ++ infer (( Not rhs `Imply` Not lhs):list) goal
 
 -- distribution of Equivalence in implications
 launchInferences eq@[(rhs `Eq` lhs)] goal =

@@ -51,7 +51,7 @@ noVerboseResToStr k qs =
     showResolve prev (Fact q) =
       case M.lookup q k of
         Nothing -> prev ++ "error: the fact " ++ q ++ " hasn't been searched"
-        Just (state, _proof) -> prev ++ "The fact " ++ q ++ " is " ++ (show state)
+        Just (state, _proof) -> prev ++ "The fact " ++ q ++ " is " ++ (show state) ++ "\n"
   in foldl showResolve "" qs
 
 verboseResToStr :: Knowledge -> Query -> String
