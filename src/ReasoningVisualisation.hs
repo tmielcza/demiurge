@@ -1,6 +1,6 @@
 module ReasoningVisualisation(
   showFactResolution,
-  runShowProof
+  runShowInvalid
   ) where
 
 import Types(
@@ -119,8 +119,9 @@ consumeProof goal proof = do
   setAsKnown goal
   return s
 
-runShowProof :: Knowledge -> Expr -> Proof -> String
-runShowProof k g p = fst $ S.runState (consumeProof g p) k
+runShowInvalid :: Knowledge -> Expr -> Proof -> Bool -> String
+runShowInvalid k g p Prelude.True = fst $ S.runState (consumeProof g p) k
+runShowInvalid k (Fact g) (Invalid (rule1:_) (rule2:_)) Prelude.False = "The rules " ++ show rule1 ++ " and " ++ show rule2 ++ " have different results for the goal " ++ g
 
 showFactResolution :: Knowledge -> Expr -> (String, Knowledge)
 showFactResolution k (Fact goal) =

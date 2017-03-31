@@ -74,7 +74,7 @@ evalGoal goal@(Fact c) = do
     ns <- resolveRules (Not goal)
     knowledge <- get
     let resultState = s `combineGoalAndOposite` ns
-    either (throwError . runShowProof knowledge goal) (\(s, p) -> do{modify (insert c (s, p)); return s}) resultState
+    either (\pr -> throwError (knowledge, goal, pr)) (\(s, p) -> do{modify (insert c (s, p)); return s}) resultState
 
 resolveFact :: Expr -> Resolution T.State
 resolveFact fact@(Fact c) = do
@@ -87,8 +87,10 @@ getStateOfQueries queries = do
     collectedKnowledges <- get
     return collectedKnowledges
 
-resolve :: ([Relation], [(String, State)], [Expr]) -> Either String Knowledge
-resolve (rules, init, queries) =
+resolve :: Bool -> ([Relation], [(String, State)], [Expr]) -> Either String Knowledge
+resolve isVerbose (rules, init, queries) =
   let knowledge = fromList $ map (\(k, st) -> (k, (st, Known st))) init
       results = fst $ runState (runReaderT (runExceptT (getStateOfQueries queries)) rules) knowledge
-  in results
+  in case results of
+    Left (k, g, p) -> Left (runShowInvalid k g p isVerbose)
+    Right r -> Right r

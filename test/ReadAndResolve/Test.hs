@@ -1,6 +1,6 @@
 module ReadAndResolve.Test where
 import ReadAndResolve (readAndResolve)
-import Prelude hiding (True, False)
+-- import Prelude hiding (True, False)
 import Types
 import Test.Framework (testGroup, Test)
 import Test.Framework.Providers.HUnit
@@ -10,20 +10,22 @@ import Test.HUnit hiding (Test)
 resolveFileTest filepath expect=
      let fileAssertion = do
           content <- readFile (filepath)
-          ret <- readAndResolve filepath
+          ret <- readAndResolve filepath Prelude.False
           assertEqual filepath expect ret
      in testCase filepath fileAssertion
 
+answer fact state =
+  "The fact " ++ fact ++ " is " ++ state
 
 fileSuite = testGroup "Files tests"
             [
-              resolveFileTest "samples/easy" (Right [("B", True)]),
-              resolveFileTest "samples/error1"  (Left "Incoherent rules and/or initial facts"),
-              resolveFileTest "samples/conjunction" (Right [("C", False)]),
-              resolveFileTest "samples/invalid" (Left "Incoherent rules and/or initial facts"),
-              resolveFileTest "samples/subject" (Left "Incoherent rules and/or initial facts"),
+              resolveFileTest "samples/easy" (answer "B" "True"),
+              resolveFileTest "samples/error1"  "The rules {(A + C) => B} and {(A + C) => !B} have different results for the goal B",
+              resolveFileTest "samples/conjunction" (answer "C" "False"),
+              resolveFileTest "samples/invalid" "The rules {B => E} and {C => !E} have different results for the goal E"",
+              resolveFileTest "samples/subject" "The rules {(A + B) => C} and {(A + B) => !C} have different results for the goal C"
 
-              resolveFileTest "samples/test1" (Right [
+              {-resolveFileTest "samples/test1" (Right [
                 ("B", Unprovable (Not(Not(Fact "D")) `And` (Not(Fact "B")))),
                 ("D", Unprovable (Not(Not(Fact "D")) `And` (Not(Fact "B"))))
                  ]),
@@ -57,5 +59,5 @@ fileSuite = testGroup "Files tests"
                 ("E", Unprovable (Fact "avoir"))
                 ]),
               resolveFileTest "samples/untest9" (Right [("A", Unprovable (Not $ Fact "B")), ("B", Unprovable (Not $ Fact "A"))])
-
+-}
             ]

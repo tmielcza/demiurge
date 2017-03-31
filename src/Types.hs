@@ -54,7 +54,7 @@ type Knowledge = Map String (Types.State, Proof)
 -- | The type of the relations between the Exprs. They form rules.
 data Relation = Eq Expr Expr | Imply Expr Expr
 
-type Resolution a = (ExceptT String (ReaderT [Relation] (S.State Knowledge))) a
+type Resolution a = (ExceptT (Knowledge, Expr, Proof) (ReaderT [Relation] (S.State Knowledge))) a
 
 data Proof = RuleProof [Relation] {-State-} |
   Known Types.State |
