@@ -15,46 +15,71 @@ resolveFileTest filepath expect=
      in testCase filepath fileAssertion
 
 answer fact state =
-  "The fact " ++ fact ++ " is " ++ state
+  "The fact " ++ fact ++ " is " ++ state ++"\n"
 
 fileSuite = testGroup "Files tests"
             [
               resolveFileTest "samples/easy" (answer "B" "True"),
               resolveFileTest "samples/error1"  "The rules {(A + C) => B} and {(A + C) => !B} have different results for the goal B",
               resolveFileTest "samples/conjunction" (answer "C" "False"),
-              resolveFileTest "samples/invalid" "The rules {B => E} and {C => !E} have different results for the goal E"",
-              resolveFileTest "samples/subject" "The rules {(A + B) => C} and {(A + B) => !C} have different results for the goal C"
-
-              resolveFileTest "samples/test1" "The fact B is Unprovable\nThe fact D is Unprovable ",
+              resolveFileTest "samples/invalid" "The rules {B => E} and {C => !E} have different results for the goal E",
+              resolveFileTest "samples/subject" "The rules {(A + B) => C} and {(A + B) => !C} have different results for the goal C",
+              resolveFileTest "samples/test1" (
+                answer "B" "Unprovable" ++
+                answer "D" "Unprovable"
+              ),
               resolveFileTest "samples/test2" (answer "Y" "True"),
-              resolveFileTest "samples/equivalence" (Right [("A", False), ("C", False), ("D", True)]),
-{-
-              resolveFileTest "samples/testAnonA" (Right [("Enfaitcestfaux", False)]),
-              resolveFileTest "samples/transposition" (Right [("R", True)]),
-              resolveFileTest "samples/unso" (Right [("Reponsefaux", False)]),
-              resolveFileTest "samples/inferenceRule" (Right [
-                ("Q", True),
-                ("R", False),
-                ("V", True),
-                ("W", True)
-                 ]),
-              resolveFileTest "samples/simpleTest" (Right [("B", True)]),
-              resolveFileTest "samples/untest" (Right [("Maybe", False), ("True", True)]),
-              resolveFileTest "samples/untest2" (Right [("E", False)]),
-              resolveFileTest "samples/untest3"  (Right [("A", False), ("B", False), ("C", False), ("D", False)]),
-              resolveFileTest "samples/untest4" (Right [
-                ("A", True),
-                ("B", Unprovable((Not(Fact "A")) `Xor` (Not(Fact "C")))),
-                ("C", Unprovable((Not(Fact "A")) `Xor` (Not(Fact "B"))))
-                  ]),
-              resolveFileTest "samples/untest6" (Right [("A", False), ("B", False)]),
-              resolveFileTest "samples/untest7" (Right [("A", False), ("B", False), ("C", False), ("E", False)]),
-              resolveFileTest "samples/untest8" (Right [
-                ("A", True),
-                ("B", Unprovable (Fact "Jesaispas")),
-                ("C", Unprovable (Fact "aremplir")),
-                ("E", Unprovable (Fact "avoir"))
-                ]),
-              resolveFileTest "samples/untest9" (Right [("A", Unprovable (Not $ Fact "B")), ("B", Unprovable (Not $ Fact "A"))])
--}
+              resolveFileTest "samples/equivalence" (answer "C" "True"),
+              resolveFileTest "samples/contradiction-tautologie" (
+                              answer "Enfaitcestfaux" "False" ++
+                              answer "F" "True" ++
+                              answer "TropVrai" "True" ++
+                              answer "P" "True"
+              ),
+              resolveFileTest "samples/transposition" (answer "R" "True"),
+              resolveFileTest "samples/unso" (answer "Reponsefaux" "False"),
+              resolveFileTest "samples/inferenceRule" (
+                              answer "Q" "True" ++
+                              answer "R" "False" ++
+                              answer "V" "True" ++
+                              answer "W" "True"
+              ),
+              resolveFileTest "samples/simpleTest" (answer "B" "True"),
+              resolveFileTest "samples/untest" (
+                answer "Maybe" "True" ++
+                answer "True" "True"
+              ),
+              resolveFileTest "samples/untest2" (answer "E" "False"),
+              resolveFileTest "samples/untest3"  (
+                              answer "A" "False" ++
+                              answer "B" "False" ++
+                              answer "C" "False" ++
+                              answer "D" "False"
+              ),
+              resolveFileTest "samples/untest4" (
+                answer "A" "True" ++
+                answer "B" "Unprovable" ++
+                answer "C" "Unprovable"
+              ),
+              resolveFileTest "samples/untest6" (
+                answer "A" "False" ++
+                answer "B" "False"
+              ),
+              resolveFileTest "samples/untest7" (
+                answer "A" "False" ++
+                answer "B" "False" ++
+                answer "C" "False" ++
+                answer "E" "False"
+              ),
+              resolveFileTest "samples/untest8" (
+                answer "A" "True" ++
+                answer "B" "Unprovable" ++
+                answer "C" "Unprovable" ++
+                answer "D" "Unprovable"
+              ),
+              resolveFileTest "samples/untest9" (
+                answer "A" "Unprovable" ++
+                answer "B" "Unprovable"
+              ),
+              resolveFileTest "samples/untest10" (answer "B" "Unprovable")
             ]

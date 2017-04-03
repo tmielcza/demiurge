@@ -1,0 +1,10 @@
+!B => A
+
+!B | E => D
+# !B | D => D
+#!D => !(!B | D)
+#!D => B + !D
+#!D | D => B
+# ici, il considere que Unsolved | Not Unsolved est obligatoirement faux
+=
+?B
