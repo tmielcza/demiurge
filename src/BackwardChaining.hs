@@ -46,7 +46,7 @@ import Debug.Trace
 
 import Prelude hiding(lookup, filter)
 
-import Data.Map(insert, lookup, toList, fromList, map)
+import Data.Map(insert, lookup, toList, fromList, foldWithKey, map)
 
 resolveRules :: Expr -> Resolution (T.State, Proof)
 resolveRules goal = do
@@ -56,7 +56,7 @@ resolveRules goal = do
         (s, RuleProof log) <- resolution
         ret <- eval relation
         case ret of
-          ((Unsolved _), _) -> return (s, RuleProof log)
+          (s'@(Unsolved _), _) -> if (null log) then return (s', RuleProof ruleStack) else return (s, RuleProof log)
           (s', Prelude.True) -> return (s', Contradiction ruleStack)
           (s', Prelude.False) -> if (null log) then return (s', RuleProof ruleStack) else return (s'@| s, RuleProof ruleStack)
   foldl evalRule (return (Unsolved goal, RuleProof [])) concernedRules
@@ -84,12 +84,20 @@ resolveFact fact@(Fact c) = do
 getStateOfQueries :: [Expr] -> Resolution Knowledge
 getStateOfQueries queries =
   let
-  unsolvedToFalse (Unsolved _ , p) = (T.False, p)
-  unsolvedToFalse knowledge = knowledge
+  unsolvedToFalse k (Unsolved e , p) prev = do
+    s <- evalExpr resolveFact e
+    case s of
+      Unsolved _ -> modify (insert k (T.False, RuleProof []))
+      _ -> modify (insert k (s, p))
+    p <- prev
+    return (k ++ p)
+  unsolvedToFalse k pr prev = do { p <- prev ;return (k ++ p)}
   in do
     mapM_ (resolveFact) queries
     collectedKnowledges <- get
-    return $ Data.Map.map unsolvedToFalse collectedKnowledges
+    Data.Map.foldWithKey unsolvedToFalse (return "") collectedKnowledges
+    newKnowledge <- get
+    return newKnowledge
 
 
 resolve :: Bool -> ([Relation], [(String, State)], [Expr]) -> Either String Knowledge

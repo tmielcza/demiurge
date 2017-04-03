@@ -33,7 +33,7 @@ fileSuite = testGroup "Files tests"
               resolveFileTest "samples/contradiction-tautologie" (
                               answer "Enfaitcestfaux" "False" ++
                               answer "F" "True" ++
-                              answer "TropVrai" "True" ++
+                              answer "Tropvrai" "True" ++
                               answer "P" "True"
               ),
               resolveFileTest "samples/transposition" (answer "R" "True"),
@@ -46,7 +46,7 @@ fileSuite = testGroup "Files tests"
               ),
               resolveFileTest "samples/simpleTest" (answer "B" "True"),
               resolveFileTest "samples/untest" (
-                answer "Maybe" "True" ++
+                answer "Maybe" "False" ++
                 answer "True" "True"
               ),
               resolveFileTest "samples/untest2" (answer "E" "False"),
