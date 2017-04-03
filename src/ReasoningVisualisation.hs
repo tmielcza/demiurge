@@ -93,11 +93,8 @@ showProof goal (Invalid list1@(rule1:_) list2@(rule2:_)) =
   (("There are different results for " ++ show goal ++ ":\n --> " ++ show rule1 ++ "\n") ++* rulesReasoning list1 *++ ("--> " ++ show rule2 ++ "\n")) *++*
    rulesReasoning list2 *++ (show rule1 ++ " has a different result from " ++ show rule2 ++ "\n")
 
-showProof goal (Contradiction list@(rule:_) []) =
-  ("Their is a contradiction in the rule " ++ show rule) ++* rulesReasoning list
-
-showProof goal (Tautology list@(rule:_) []) =
-  ("Their is a tautology in the rule " ++ show rule) ++* rulesReasoning list
+showProof goal (Contradiction list@(rule:_)) =
+  return ("Their is a contradiction in the rule " ++ show rule ++ "\n")
 
 showProof goal (RuleProof list@(rule:_)) = do
   k <- S.get

@@ -9,6 +9,7 @@ module Logic
 
 import Types
 import Prelude hiding (not, True, False)
+import qualified Prelude as P (not, Bool(..))
 import Debug.Trace
 
 class Logical a where
@@ -24,27 +25,25 @@ conjunctionContainsInverseExpr goal (lhs `And` rhs) =
   conjunctionContainsInverseExpr goal lhs || conjunctionContainsInverseExpr goal rhs
 conjunctionContainsInverseExpr goal expr = goal == Not expr || Not goal == expr
 
-debug str rhs expr ret = trace (str ++ " " ++ show rhs ++ " " ++ show expr) ret
 
-evalImplication :: Expr -> State -> State
+evalImplication :: Expr -> State -> Resolution (State, Bool)
 evalImplication (Not rhs)  (Unsolved expr)
-  | expr == rhs = debug ("pop") (Not rhs)  (Unsolved expr) (Types.True) -- a => !a
-  | otherwise =  debug "yyy1= " (Not rhs)  (Unsolved expr) (Unsolved expr)
+  | expr == rhs = return (Types.True, P.True) -- a => !a
+  | otherwise = return (Unsolved expr, P.False)
 evalImplication rhs  (Unsolved (Not expr))
-  | expr == rhs = debug  "youp" rhs  (Unsolved (Not expr)) (Types.True) -- !a => a
-  | otherwise = debug  "eeee" rhs  (Unsolved (Not expr)) (Types.True)-- !b => a
+  | expr == rhs = return (Types.True, P.True ) -- !a => a
+  | otherwise = return (Types.True, P.False)-- !b => a
 evalImplication rhs  (Unsolved expr)
-  | conjunctionContainsInverseExpr rhs expr = debug "trace"  rhs  (Unsolved expr) (Unprovable expr)
-evalImplication rhs@(Not _) Types.True =debug "efw" rhs Types.True Types.True
-evalImplication (Not rhs) Types.False = debug "444" (Not rhs) Types.False (Unsolved rhs)
-evalImplication rhs Types.False = debug "fw" rhs Types.False (Unsolved rhs) -- problem expr dans rhs
-evalImplication rhs state = debug "des" rhs state state
+  | conjunctionContainsInverseExpr rhs expr = return (Unprovable expr, P.False)
+evalImplication rhs@(Not _) Types.True =return(Types.True, P.False)
+evalImplication (Not rhs) Types.False = return (Unsolved rhs, P.False)
+evalImplication rhs Types.False = return (Unsolved rhs, P.False) -- problem expr dans rhs
+evalImplication rhs state = return (state, P.False)
 
 combineGoalAndOposite :: (State, Proof) -> (State, Proof) -> Either Proof (State, Proof)
 combineGoalAndOposite (Types.True, RuleProof g) (Types.True, RuleProof ng) = Left (Invalid g ng)
 combineGoalAndOposite _ (Types.True, ng) = Right (Types.False, ng)
 combineGoalAndOposite _ (Unprovable u, ng) = Right (Unprovable u, ng)
-combineGoalAndOposite (Unsolved _, g) _ = Right (Types.False, g) -- in the cases where we don't find any answer, the fact is considered a False
 combineGoalAndOposite goal _oposite = Right goal
 
 

@@ -46,7 +46,7 @@ data Expr = Xor Expr Expr |
             Not Expr
 
 data State = Unsolved Expr | True | False | Unprovable Expr
-  deriving (Eq, Show)
+  deriving (Eq)
 
 -- | Association of an Expr (Mostly a Fact) to a State
 type Knowledge = Map String (Types.State, Proof)
@@ -56,18 +56,19 @@ data Relation = Eq Expr Expr | Imply Expr Expr
 
 type Resolution a = (ExceptT (Knowledge, Expr, Proof) (ReaderT [Relation] (S.State Knowledge))) a
 
-data Proof = RuleProof [Relation] {-State-} |
+data Proof =
+  RuleProof [Relation] {-State-} |
   Known Types.State |
-  Tautology [Relation] [Relation] |
-  Contradiction [Relation] [Relation] |
+  --Tautology [Relation] {-[Relation]-} | Bad use of the word Tautology -> https://en.wikipedia.org/wiki/Tautology_(rule_of_inference)
+  Contradiction [Relation] {-[Relation]-} |
   Invalid [Relation] [Relation]
     deriving (Show)
 
-{-instance Show Types.State where
+instance Show Types.State where
   show (Unprovable _)= "Unprovable"
   show (Unsolved _)= "Unsolved"
   show True = "True"
-  show False = "False"-}
+  show False = "False"
 
 instance Eq Expr where
     (And a1 b1) == (And a2 b2) = cmpBinaryExprSides a1 a2 b1 b2

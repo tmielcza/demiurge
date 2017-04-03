@@ -40,13 +40,13 @@ import Types as T
 
 import Inference
 
-import Logic
+import Logic(combineGoalAndOposite, evalImplication, evalExpr, Logical(..))
 
 import Debug.Trace
 
 import Prelude hiding(lookup, filter)
 
-import Data.Map(insert, lookup, toList, fromList)
+import Data.Map(insert, lookup, toList, fromList, map)
 
 resolveRules :: Expr -> Resolution (T.State, Proof)
 resolveRules goal = do
@@ -54,19 +54,17 @@ resolveRules goal = do
   let concernedRules = inferRules rules goal
   let evalRule resolution (ruleStack, relation) = do
         (s, RuleProof log) <- resolution
-        s'<- eval relation
-        let log' = case s' of Unsolved _ -> log
-                              _ -> ruleStack
-        let news = s @| s'
-        case log of
-          [] -> return (s', RuleProof ruleStack)
-          _ -> return (news, RuleProof log')
+        ret <- eval relation
+        case ret of
+          ((Unsolved _), _) -> return (s, RuleProof log)
+          (s', Prelude.True) -> return (s', Contradiction ruleStack)
+          (s', Prelude.False) -> if (null log) then return (s', RuleProof ruleStack) else return (s'@| s, RuleProof ruleStack)
   foldl evalRule (return (Unsolved goal, RuleProof [])) concernedRules
 
-eval :: Relation -> Resolution T.State
+eval :: Relation -> Resolution (T.State, Bool)
 eval (lhs `Imply` rhs) = do
   s <- evalExpr resolveFact lhs
-  trace ("rhs => " ++ show rhs ++ " / result => " ++ show s)(return (evalImplication rhs s))
+  evalImplication rhs s
 eval _ = error "Unreachable Code"
 
 evalGoal :: Expr -> Resolution T.State
@@ -84,14 +82,19 @@ resolveFact fact@(Fact c) = do
   maybe (evalGoal fact) (\(st, _pr) -> return st) (lookup c knowledge)
 
 getStateOfQueries :: [Expr] -> Resolution Knowledge
-getStateOfQueries queries = do
+getStateOfQueries queries =
+  let
+  unsolvedToFalse (Unsolved _ , p) = (T.False, p)
+  unsolvedToFalse knowledge = knowledge
+  in do
     mapM_ (resolveFact) queries
     collectedKnowledges <- get
-    return collectedKnowledges
+    return $ Data.Map.map unsolvedToFalse collectedKnowledges
+
 
 resolve :: Bool -> ([Relation], [(String, State)], [Expr]) -> Either String Knowledge
 resolve isVerbose (rules, init, queries) =
-  let knowledge = fromList $ map (\(k, st) -> (k, (st, Known st))) init
+  let knowledge = fromList $ Prelude.map (\(k, st) -> (k, (st, Known st))) init
       results = fst $ runState (runReaderT (runExceptT (getStateOfQueries queries)) rules) knowledge
   in case results of
     Left (k, g, p) -> Left (runShowInvalid k g p isVerbose)
