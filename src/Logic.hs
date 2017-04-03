@@ -28,18 +28,18 @@ conjunctionContainsInverseExpr goal expr = goal == Not expr || Not goal == expr
 debug str rhs expr ret = return (ret, P.False)
 
 evalImplication :: Expr -> State -> Resolution (State, Bool)
-evalImplication (Not rhs) (Unsolved expr)
+evalImplication (Not rhs)  (Unsolved expr)
   | expr == rhs = return (Types.True, P.True) -- a => !a
-  | otherwise = return(Unsolved expr, T.False)
-evalImplication rhs (Unsolved (Not expr))
+  | otherwise = return(Unsolved expr, P.False)
+evalImplication rhs  (Unsolved (Not expr))
   | expr == rhs = return (Types.True, P.True ) -- !a => a
-  | otherwise = return(Types.True, T.False)-- !b => a
-evalImplication rhs (Unsolved expr)
-  | conjunctionContainsInverseExpr rhs expr = return(Unprovable expr, T.False)
-evalImplication rhs@(Not _) Types.True = return (T.True, T.False)
-evalImplication (Not rhs) Types.False = return(Unsolved rhs, T.False)
-evalImplication rhs Types.False = return(Unsolved rhs, T.False) -- problem expr dans rhs
-evalImplication rhs state = return (state, T.False)
+  | otherwise =  return(Types.True, P.False)-- !b => a
+evalImplication rhs  (Unsolved expr)
+  | conjunctionContainsInverseExpr rhs expr =  return(Unprovable expr, P.False)
+evalImplication rhs@(Not _) Types.True = return (Types.True, P.False)
+evalImplication (Not rhs) Types.False =  return(Unsolved rhs, P.False)
+evalImplication rhs Types.False =  return(Unsolved rhs, P.False) -- problem expr dans rhs
+evalImplication rhs state =  return (state, P.False)
 
 
 combineGoalAndOposite :: (State, Proof) -> (State, Proof) -> Either Proof (State, Proof)
