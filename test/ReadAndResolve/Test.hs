@@ -30,9 +30,11 @@ fileSuite = testGroup "Files tests"
               ),
               resolveFileTest "samples/test2" (answer "Y" "True"),
               resolveFileTest "samples/equivalence" (answer "C" "True"),
-              resolveFileTest "samples/contradiction-tautologie" (
+              resolveFileTest "samples/contradiction" (
                               answer "Enfaitcestfaux" "False" ++
-                              answer "F" "True" ++
+                              answer "F" "True"
+              ),
+              resolveFileTest "samples/tautomlogie" (
                               answer "Tropvrai" "True" ++
                               answer "P" "True"
               ),

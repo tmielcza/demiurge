@@ -84,13 +84,15 @@ resolveFact fact@(Fact c) = do
 getStateOfQueries :: [Expr] -> Resolution Knowledge
 getStateOfQueries queries =
   let
-  unsolvedToFalse k (Unsolved e , p) prev = do
+  lastResolution k (e, p) prev defaultValue = do
     s <- evalExpr resolveFact e
     case s of
-      Unsolved _ -> modify (insert k (T.False, RuleProof []))
+      Unsolved _ -> modify (insert k (defaultValue, p))
       _ -> modify (insert k (s, p))
     p <- prev
     return (k ++ p)
+  unsolvedToFalse k (Unsolved e , p) prev = lastResolution k (e, p) prev T.False
+  unsolvedToFalse k (Unprovable e , p) prev = lastResolution k (e, p) prev (Unprovable e)
   unsolvedToFalse k pr prev = do { p <- prev ;return (k ++ p)}
   in do
     mapM_ (resolveFact) queries
