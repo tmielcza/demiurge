@@ -48,9 +48,9 @@ resolvedToString :: Expr -> Expr -> String -> KnowledgeState String
 resolvedToString e1 e2 opeSign = ("(" ++* showResolvedExpr e1) *++* (opeSign ++* showResolvedExpr e2 *++ ")")
 
 showResolvedExpr :: Expr  -> KnowledgeState String
-showResolvedExpr (Xor e1 e2) = resolvedToString e1 e2 "^"
-showResolvedExpr (Or e1 e2) = resolvedToString e1 e2 "|"
-showResolvedExpr (And e1 e2) = resolvedToString e1 e2 "+"
+showResolvedExpr (Xor e1 e2) = resolvedToString e1 e2 " ^ "
+showResolvedExpr (Or e1 e2) = resolvedToString e1 e2 " | "
+showResolvedExpr (And e1 e2) = resolvedToString e1 e2 " + "
 showResolvedExpr (Not e) = "!" ++* showResolvedExpr e
 showResolvedExpr (Fact fact) = getExistantInKnowledge fact (\(_, Known st) -> (return . show) st)
 
@@ -71,6 +71,7 @@ rulesReasoning :: [Relation] -> KnowledgeState String
 rulesReasoning list@(rule@(lft `Imply` _):_)=
   let
     rulesInference = if (length list > 1) then showRulesTransformation list else ""
+    showSubgoal f (_st, Known (Unsolved _)) = return ("Fact " ++ f ++ " is Unknown\n")
     showSubgoal f (_st, Known b) = return ("Fact "++ f ++ " is known as " ++ (show b) ++ "\n")
     showSubgoal f (st, p) = ("Fact " ++ f ++ " is " ++ (show st) ++ ":\n") ++* (consumeProof (Fact f) p)
     reasoning = foldl (\prev (Fact x) -> (getExistantInKnowledge x (showSubgoal x)) *++* prev) (return "") (getFacts lft)
@@ -102,7 +103,7 @@ showProof goal (RuleProof list@(rule:_)) = do
      show rule ++ "\n") ++* rulesReasoning list *++ "\n"
 
 showProof goal (RuleProof []) =
-  return $ "No rule matches the goal " ++ show goal ++ "\n"
+  return $ "No rule resolves the goal " ++ show goal ++ "\n"
 
 showProof goal (Known st) =
   return $ "The fact " ++ show goal ++ " is known as " ++ show st ++ "\n"

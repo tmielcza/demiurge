@@ -91,7 +91,7 @@ getStateOfQueries queries =
       _ -> modify (insert k (s, p))
     p <- prev
     return (k ++ p)
-  unsolvedToFalse k (Unsolved e , p) prev = lastResolution k (e, p) prev T.False
+  unsolvedToFalse k (Unsolved e , p) prev = lastResolution k (e, RuleProof []) prev T.False
   unsolvedToFalse k (Unprovable e , p) prev = lastResolution k (e, p) prev (Unprovable e)
   unsolvedToFalse k pr prev = do { p <- prev ;return (k ++ p)}
   in do

@@ -66,7 +66,7 @@ data Proof =
 
 instance Show Types.State where
   show (Unprovable _)= "Unprovable"
-  show (Unsolved p)= "Unsolved "
+  show (Unsolved p)= show p
   show True = "True"
   show False = "False"
 
