@@ -1,6 +1,5 @@
 module Logic
 (
-  conjunctionContainsInverseExpr,
   evalImplication,
   combineGoalAndOposite,
   evalExpr,
@@ -20,27 +19,25 @@ class Logical a where
   (@^) :: a -> a -> a
   lhs @^ rhs = (lhs @| rhs) @+ not (lhs @+ rhs)
 
-conjunctionContainsInverseExpr :: Expr -> Expr -> Bool
-conjunctionContainsInverseExpr goal (lhs `And` rhs) =
-  conjunctionContainsInverseExpr goal lhs || conjunctionContainsInverseExpr goal rhs
-conjunctionContainsInverseExpr goal expr = goal == Not expr || Not goal == expr
-
-debug str rhs expr ret = return (ret, P.False)
+isConjunctionOfNegation :: Expr -> Bool
+isConjunctionOfNegation (lhs `And` rhs) =
+  isConjunctionOfNegation lhs && isConjunctionOfNegation rhs
+isConjunctionOfNegation (Not (Not expr)) = isConjunctionOfNegation expr
+isConjunctionOfNegation (Not _) = P.True
+isConjunctionOfNegation _ = P.False
 
 evalImplication :: Expr -> State -> Resolution (State, Bool)
-evalImplication (Not rhs)  (Unsolved expr)
+evalImplication (Not rhs) (Unsolved expr)
   | expr == rhs = return (Types.True, P.True) -- a => !a
   | otherwise = return(Unsolved expr, P.False)
-evalImplication rhs  (Unsolved (Not expr))
-  | expr == rhs = return (Types.True, P.True ) -- !a => a
-  | otherwise =  return(Types.Unprovable (Not expr), P.False)-- !b => a
-evalImplication rhs  (Unsolved expr)
-  | conjunctionContainsInverseExpr rhs expr = return(Unprovable expr, P.False)
+evalImplication rhs (Unsolved (Not expr))
+  | expr == rhs = return (Types.True, P.True) -- !a => a
+evalImplication rhs (Unsolved expr)
+  | isConjunctionOfNegation expr = return (Unprovable expr, P.False) -- !b [ + !c ...] => a
 evalImplication rhs@(Not _) Types.True = return (Types.True, P.False)
-evalImplication (Not rhs) Types.False =  return(Unsolved rhs, P.False)
-evalImplication rhs Types.False =  return(Unsolved rhs, P.False) -- problem expr dans rhs
-evalImplication rhs state =  return (state, P.False)
-
+evalImplication (Not rhs) Types.False = return (Unsolved rhs, P.False)
+evalImplication rhs Types.False = return (Unsolved rhs, P.False) -- problem expr dans rhs
+evalImplication rhs state = return (state, P.False)
 
 combineGoalAndOposite :: (State, Proof) -> (State, Proof) -> Either Proof (State, Proof)
 combineGoalAndOposite (Types.True, RuleProof g) (Types.True, RuleProof ng) = Left (Invalid g ng)
