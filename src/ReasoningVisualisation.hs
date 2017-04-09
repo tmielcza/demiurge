@@ -74,7 +74,7 @@ rulesReasoning list@(rule@(lft `Imply` _):_)=
     showSubgoal f (_st, Known b) = return ("Fact "++ f ++ " is known as " ++ (show b) ++ "\n")
     showSubgoal f (st, p) = ("Fact " ++ f ++ " is " ++ (show st) ++ ":\n") ++* (consumeProof (Fact f) p)
     reasoning = foldl (\prev (Fact x) -> (getExistantInKnowledge x (showSubgoal x)) *++* prev) (return "") (getFacts lft)
-    conclusion = ("so the rule " ++ show lft  ++ " matches ") ++* (showResolvedExpr lft) *++ "\n"
+    conclusion = ("so the expression " ++ show lft  ++ " matches ") ++* (showResolvedExpr lft) *++ "\n"
   in rulesInference ++* reasoning *++* conclusion
 
 rulesReasoning [] = return "Unreachable Code, showProof check if the list is empty"

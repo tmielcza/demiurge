@@ -33,9 +33,9 @@ evalImplication (Not rhs)  (Unsolved expr)
   | otherwise = return(Unsolved expr, P.False)
 evalImplication rhs  (Unsolved (Not expr))
   | expr == rhs = return (Types.True, P.True ) -- !a => a
-  | otherwise =  return(Types.True, P.False)-- !b => a
+  | otherwise =  return(Types.Unprovable (Not expr), P.False)-- !b => a
 evalImplication rhs  (Unsolved expr)
-  | conjunctionContainsInverseExpr rhs expr =  return(Unprovable expr, P.False)
+  | conjunctionContainsInverseExpr rhs expr = return(Unprovable expr, P.False)
 evalImplication rhs@(Not _) Types.True = return (Types.True, P.False)
 evalImplication (Not rhs) Types.False =  return(Unsolved rhs, P.False)
 evalImplication rhs Types.False =  return(Unsolved rhs, P.False) -- problem expr dans rhs
