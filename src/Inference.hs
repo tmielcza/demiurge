@@ -46,8 +46,9 @@ launchInferences :: [Relation] -> Expr -> [([Relation], Relation)]
 --modus tollens or transposition
 -- here the xs is the possible equivalence (or an empty list)
 launchInferences list@((lhs `Imply` rhs):xs) goal
-  | rhs == Not lhs = infer (( lhs `Imply` rhs):xs) goal
-  | otherwise = infer (( lhs `Imply` rhs):xs) goal ++ infer (( Not rhs `Imply` Not lhs):list) goal
+  | rhs == Not lhs = infer ((toDNF lhs `Imply` toCNF rhs):(lhs `Imply` rhs):xs) goal
+  | otherwise = infer ((toDNF lhs `Imply` toCNF rhs):(lhs `Imply` rhs):xs) goal
+    ++ infer ((toDNF (Not rhs) `Imply` toCNF (Not lhs)):(Not rhs `Imply` Not lhs):list) goal
 
 -- distribution of Equivalence in implications
 launchInferences eq@[(rhs `Eq` lhs)] goal =
@@ -62,3 +63,27 @@ opposite (Not e) = e
 opposite (lhs `And` rhs) = (opposite lhs) `Or` (opposite rhs)
 opposite (lhs `Or` rhs) = (opposite lhs) `And` (opposite rhs)
 opposite (lhs `Xor` rhs) = ((opposite lhs) `And` (opposite rhs)) `Or` (lhs `And` rhs)
+
+xorDNF (lhs `Xor` rhs) = ((opposite . xorDNF) lhs `And` xorDNF rhs) `Or` (xorDNF lhs `And` (opposite . xorDNF) rhs)
+xorDNF (lhs `And` rhs) = xorDNF lhs `And` xorDNF rhs
+xorDNF (lhs `Or` rhs) = xorDNF lhs `Or` xorDNF rhs
+xorDNF fact@(Fact _) = fact
+xorDNF fact@(Not (Fact _)) = fact
+xorDNF (Not e) = xorDNF (opposite e)
+
+xorCNF (lhs `Xor` rhs) = ((opposite . xorCNF) lhs `Or` (opposite . xorCNF) rhs) `And` (xorCNF lhs `Or` xorCNF rhs)
+xorCNF (lhs `And` rhs) = xorDNF lhs `And` xorDNF rhs
+xorCNF (lhs `Or` rhs) = xorDNF lhs `Or` xorDNF rhs
+xorCNF fact@(Fact _) = fact
+xorCNF fact@(Not (Fact _)) = fact
+xorCNF (Not e) = xorCNF (opposite e)
+
+toCNF (a `Or` (b `And` c)) = toCNF (xorCNF a `Or` xorCNF b) `And` toCNF (xorCNF a `Or` xorCNF c)
+toCNF ((a `And` b) `Or` c) = toCNF (xorCNF c `Or` xorCNF a) `And` toCNF (xorCNF c `Or` xorCNF b)
+toCNF fact@(Fact _) = fact
+toCNF e = xorCNF e
+
+toDNF (a `And` (b `Or` c)) = toCNF (xorDNF a `And` xorDNF b) `Or` toCNF (xorDNF a `And` xorDNF c)
+toDNF ((a `Or` b) `And` c) = toCNF (xorDNF c `And` xorDNF a) `Or` toCNF (xorDNF c `And` xorDNF b)
+toDNF fact@(Fact _) = fact
+toDNF e = xorDNF e
