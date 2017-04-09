@@ -59,6 +59,7 @@ inferRules rules goal = foldr (\r -> (++) ((launchInferences [r] goal))) [] rule
 
 opposite :: Expr -> Expr
 opposite (Fact f) = Not (Fact f)
+opposite (Not (Not e)) = opposite e
 opposite (Not e) = e
 opposite (lhs `And` rhs) = (opposite lhs) `Or` (opposite rhs)
 opposite (lhs `Or` rhs) = (opposite lhs) `And` (opposite rhs)
