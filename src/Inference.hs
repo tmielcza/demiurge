@@ -63,21 +63,21 @@ opposite (Not (Not e)) = opposite e
 opposite (Not e) = e
 opposite (lhs `And` rhs) = (opposite lhs) `Or` (opposite rhs)
 opposite (lhs `Or` rhs) = (opposite lhs) `And` (opposite rhs)
-opposite (lhs `Xor` rhs) = ((opposite lhs) `And` (opposite rhs)) `Or` (lhs `And` rhs)
+-- opposite e = Not e
 
-xorDNF (lhs `Xor` rhs) = ((opposite . xorDNF) lhs `And` xorDNF rhs) `Or` (xorDNF lhs `And` (opposite . xorDNF) rhs)
-xorDNF (lhs `And` rhs) = xorDNF lhs `And` xorDNF rhs
-xorDNF (lhs `Or` rhs) = xorDNF lhs `Or` xorDNF rhs
+xorDNF (lhs `Xor` rhs) = toDNF ((opposite . toCNF) lhs `And` toDNF rhs) `Or` (toDNF lhs `And` (opposite . toCNF) rhs)
+xorDNF (lhs `And` rhs) = toDNF lhs `And` toDNF rhs
+xorDNF (lhs `Or` rhs) = toDNF lhs `Or` toDNF rhs
 xorDNF fact@(Fact _) = fact
 xorDNF fact@(Not (Fact _)) = fact
-xorDNF (Not e) = xorDNF (opposite e)
+xorDNF (Not e) = (opposite . toCNF) e
 
-xorCNF (lhs `Xor` rhs) = ((opposite . xorCNF) lhs `Or` (opposite . xorCNF) rhs) `And` (xorCNF lhs `Or` xorCNF rhs)
-xorCNF (lhs `And` rhs) = xorDNF lhs `And` xorDNF rhs
-xorCNF (lhs `Or` rhs) = xorDNF lhs `Or` xorDNF rhs
+xorCNF (lhs `Xor` rhs) = toCNF ((opposite . toDNF) lhs `Or` (opposite . toDNF) rhs) `And` (toCNF lhs `Or` toCNF rhs)
+xorCNF (lhs `And` rhs) = toCNF lhs `And` toCNF rhs
+xorCNF (lhs `Or` rhs) = toCNF lhs `Or` toCNF rhs
 xorCNF fact@(Fact _) = fact
 xorCNF fact@(Not (Fact _)) = fact
-xorCNF (Not e) = xorCNF (opposite e)
+xorCNF (Not e) = (opposite . toDNF) e
 
 toCNF (a `Or` (b `And` c)) = toCNF (xorCNF a `Or` xorCNF b) `And` toCNF (xorCNF a `Or` xorCNF c)
 toCNF ((a `And` b) `Or` c) = toCNF (xorCNF c `Or` xorCNF a) `And` toCNF (xorCNF c `Or` xorCNF b)
