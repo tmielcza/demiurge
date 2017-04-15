@@ -77,7 +77,8 @@ fileSuite = testGroup "Files tests"
                 answer "A" "True" ++
                 answer "B" "Unprovable" ++
                 answer "C" "Unprovable" ++
-                answer "D" "Unprovable"
+                answer "D" "Unprovable" ++
+                answer "E" "Unprovable"
               ),
               resolveFileTest "samples/untest9" (
                 answer "A" "Unprovable" ++
